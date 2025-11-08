@@ -14,7 +14,7 @@
 
 **🌟 Please star this Repository if it helps you ship better Code!**
 
-**🎬 Join the upcoming Masterclass to learn more ➡️ [www.claude-code.pro](https://www.claude-code.pro)**
+**🎓 Join the upcoming Academy to learn more ➡️ [www.claude-code.pro](https://www.claude-code.pro)**
 
 ---
 
@@ -112,9 +112,9 @@
 
 ---
 
-## 🎬 Masterclass Coming Soon!
+## 🎓 Claude CodePro Academy Coming Soon!
 
-If you want to dive deeper into the setup and advanced usage of Claude CodePro, check out the upcoming video masterclass with 10 comprehensive modules where we do a deep-dive into all important topics:
+If you want to dive deeper into the setup and advanced usage of Claude CodePro, check out the upcoming  academy that starts with 10 comprehensive modules where we do a deep-dive into all important topics:
 
 ### ➡️ [www.claude-code.pro](https://www.claude-code.pro)
 

@@ -80,7 +80,10 @@ Stop vibe coding, start shipping systematically with Spec-Driven Development, TD
 
 ### 📥 Installation
 
-1. Clone this repository: `git clone https://github.com/maxritter/claude-codepro.git`
+1. Clone this repository:
+```bash
+git clone https://github.com/maxritter/claude-codepro.git
+```
 2. Copy `.env.example` to `.env` and add your credentials and API keys
 ```bash
 cp .env.example .env
@@ -92,7 +95,7 @@ vim .env
 
 5. Run `cc` (which is an alias we created) in the Terminal to finish CC Setup, and `cr` to finish CodeRabbit setup
 ```bash
-# alias to spawn claude code with loaded environment varaibles
+# alias to spawn claude code with loaded environment variables
 cc
 # code rabbit cmd line tool and setup
 cr

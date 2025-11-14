@@ -10,7 +10,13 @@ if [[ -d "/workspaces/claude-codepro" ]]; then
 fi
 
 # Find THE most recently modified file (excluding cache/build dirs)
-files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# macOS version
+	files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+else
+	# Linux version
+	files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+fi
 
 # If no files found, exit silently
 if [[ -z $files ]]; then

@@ -11,7 +11,13 @@ if [[ -d "$WORKSPACE_ROOT" ]]; then
 fi
 
 # Find THE most recently modified file (excluding cache/build dirs)
-files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# macOS version
+	files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+else
+	# Linux version
+	files=$(find . -type f -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' -not -path '*/node_modules/*' -not -path '*/.venv/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/.git/*' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+fi
 
 # Exit if no files found, not Python, or test files
 [[ -z $files ]] && exit 0
@@ -74,7 +80,7 @@ display_result() {
 		echo "$emoji $icon: $error_count $plural" >&2
 		echo "───────────────────────────────────────" >&2
 		echo "$output" | grep -E "^(F[0-9]|E[0-9]|W[0-9])" | while IFS= read -r line; do
-			code=$(echo "$line" | grep -oP "^[FEW][0-9]+")
+			code=$(echo "$line" | grep -oE "^[FEW][0-9]+")
 			msg=$(echo "$line" | sed -E "s/^[FEW][0-9]+\s+(\[\*\]\s+)?//")
 			echo "  $code: $msg" >&2
 		done
@@ -82,7 +88,7 @@ display_result() {
 	basedpyright)
 		emoji="🐍"
 		icon="BasedPyright"
-		error_count=$(echo "$output" | grep -oP '"errorCount":\s*\K\d+' | head -1)
+		error_count=$(echo "$output" | grep -oE '"errorCount":[[:space:]]*[0-9]+' | grep -oE '[0-9]+' | head -1)
 		[[ -z $error_count ]] && error_count=0
 		[[ $error_count -eq 1 ]] && plural="issue" || plural="issues"
 		echo "" >&2

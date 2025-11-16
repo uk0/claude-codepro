@@ -9,6 +9,44 @@
 set -e
 
 # =============================================================================
+# Parse Command Line Arguments
+# =============================================================================
+
+NON_INTERACTIVE=false
+SKIP_ENV_SETUP=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	--non-interactive)
+		NON_INTERACTIVE=true
+		shift
+		;;
+	--skip-env)
+		SKIP_ENV_SETUP=true
+		shift
+		;;
+	--help)
+		echo "Usage: $0 [OPTIONS]"
+		echo ""
+		echo "Options:"
+		echo "  --non-interactive  Run without interactive prompts (use env vars)"
+		echo "  --skip-env        Skip environment setup (API keys)"
+		echo "  --help            Show this help message"
+		echo ""
+		echo "Environment Variables for Non-Interactive Mode:"
+		echo "  INSTALL_PYTHON=Y|N  Install Python support (default: Y)"
+		echo "  OVERWRITE_SETTINGS=Y|N  Overwrite settings.local.json if exists (default: N)"
+		exit 0
+		;;
+	*)
+		echo "Unknown option: $1"
+		echo "Run '$0 --help' for usage information"
+		exit 1
+		;;
+	esac
+done
+
+# =============================================================================
 # Configuration & Constants
 # =============================================================================
 
@@ -117,13 +155,20 @@ main() {
 	print_status "Installing into: $PROJECT_DIR"
 	echo ""
 
-	# Ask about Python support
-	echo "Do you want to install advanced Python features?"
-	echo "This includes: uv, ruff, mypy, basedpyright, and Python quality hooks"
-	read -r -p "Install Python support? (Y/n): " INSTALL_PYTHON </dev/tty
-	INSTALL_PYTHON=${INSTALL_PYTHON:-Y}
-	echo ""
-	echo ""
+	# Ask about Python support (skip if non-interactive)
+	if [[ $NON_INTERACTIVE == true ]]; then
+		# Use environment variable or default to Y
+		INSTALL_PYTHON=${INSTALL_PYTHON:-Y}
+		print_status "Non-interactive mode: Python support = $INSTALL_PYTHON"
+		echo ""
+	else
+		echo "Do you want to install advanced Python features?"
+		echo "This includes: uv, ruff, mypy, basedpyright, and Python quality hooks"
+		read -r -p "Install Python support? (Y/n): " INSTALL_PYTHON </dev/tty
+		INSTALL_PYTHON=${INSTALL_PYTHON:-Y}
+		echo ""
+		echo ""
+	fi
 
 	# =============================================================================
 	# Install Claude CodePro Files
@@ -145,11 +190,20 @@ main() {
 				if [[ $INSTALL_PYTHON =~ ^[Yy]$ ]] || [[ $file_path != *"file_checker_python.sh"* ]]; then
 					# Ask about settings.local.json if it already exists
 					if [[ $file_path == *"settings.local.json"* ]] && [[ -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
-						print_warning "settings.local.json already exists"
-						echo "This file may contain new features in this version."
-						read -r -p "Overwrite settings.local.json? (y/n): " -n 1 </dev/tty
-						echo
-						[[ ! $REPLY =~ ^[Yy]$ ]] && print_success "Kept existing settings.local.json" && continue
+						if [[ $NON_INTERACTIVE == true ]]; then
+							# Use environment variable or default to N (preserve existing)
+							OVERWRITE_SETTINGS=${OVERWRITE_SETTINGS:-N}
+							if [[ ! $OVERWRITE_SETTINGS =~ ^[Yy]$ ]]; then
+								print_success "Non-interactive mode: Kept existing settings.local.json"
+								continue
+							fi
+						else
+							print_warning "settings.local.json already exists"
+							echo "This file may contain new features in this version."
+							read -r -p "Overwrite settings.local.json? (y/n): " -n 1 </dev/tty
+							echo
+							[[ ! $REPLY =~ ^[Yy]$ ]] && print_success "Kept existing settings.local.json" && continue
+						fi
 					fi
 
 					local dest_file="${PROJECT_DIR}/${file_path}"
@@ -243,8 +297,15 @@ main() {
 	# Environment Setup
 	# =============================================================================
 
-	print_section "Environment Setup"
-	bash "$PROJECT_DIR/scripts/setup-env.sh"
+	if [[ $SKIP_ENV_SETUP == true ]] || [[ $NON_INTERACTIVE == true ]]; then
+		print_section "Environment Setup"
+		print_status "Skipping interactive environment setup (non-interactive mode)"
+		print_warning "Make sure to set up .env file manually or via environment variables"
+		echo ""
+	else
+		print_section "Environment Setup"
+		bash "$PROJECT_DIR/scripts/setup-env.sh"
+	fi
 
 	# =============================================================================
 	# Install Dependencies

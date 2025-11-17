@@ -113,10 +113,13 @@ test_non_interactive_install() {
 	mkdir -p "$test_dir"
 	cd "$test_dir"
 
-	# Initialize git repo (required for qlty)
+	# Initialize git repo with initial commit (required for qlty)
 	git init
 	git config user.email "test@example.com"
 	git config user.name "Test User"
+	touch .gitkeep
+	git add .gitkeep
+	git commit -m "Initial commit" >/dev/null 2>&1
 
 	print_test "Running install.sh with --non-interactive --local flags"
 
@@ -199,10 +202,13 @@ test_python_support_flag() {
 	mkdir -p "$test_dir"
 	cd "$test_dir"
 
-	# Initialize git repo (required for qlty)
+	# Initialize git repo with initial commit (required for qlty)
 	git init
 	git config user.email "test@example.com"
 	git config user.name "Test User"
+	touch .gitkeep
+	git add .gitkeep
+	git commit -m "Initial commit" >/dev/null 2>&1
 
 	print_test "Running install.sh with INSTALL_PYTHON=N and --local"
 
@@ -270,10 +276,13 @@ test_idempotency() {
 	mkdir -p "$test_dir"
 	cd "$test_dir"
 
-	# Initialize git repo (required for qlty)
+	# Initialize git repo with initial commit (required for qlty)
 	git init
 	git config user.email "test@example.com"
 	git config user.name "Test User"
+	touch .gitkeep
+	git add .gitkeep
+	git commit -m "Initial commit" >/dev/null 2>&1
 
 	export INSTALL_PYTHON=Y
 	export OVERWRITE_SETTINGS=N
@@ -347,10 +356,13 @@ test_bootstrap_download() {
 	mkdir -p "$test_dir"
 	cd "$test_dir"
 
-	# Initialize git repo (required for qlty)
+	# Initialize git repo with initial commit (required for qlty)
 	git init
 	git config user.email "test@example.com"
 	git config user.name "Test User"
+	touch .gitkeep
+	git add .gitkeep
+	git commit -m "Initial commit" >/dev/null 2>&1
 
 	print_test "Simulating fresh curl | bash installation"
 

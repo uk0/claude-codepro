@@ -83,9 +83,9 @@ _bootstrap_download() {
 	mkdir -p "$(dirname "$dest_path")"
 
 	# Use local files if in local mode
-	if [[ "$LOCAL_MODE" == "true" ]]; then
+	if [[ $LOCAL_MODE == "true" ]]; then
 		local source_file="$LOCAL_REPO_DIR/$repo_path"
-		if [[ -f "$source_file" ]]; then
+		if [[ -f $source_file ]]; then
 			cp "$source_file" "$dest_path"
 			return 0
 		else
@@ -132,19 +132,19 @@ download_lib_modules() {
 download_lib_modules
 
 # Source library modules
-# shellcheck source=lib/ui.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/ui.sh"
-# shellcheck source=lib/utils.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/utils.sh"
-# shellcheck source=lib/download.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/download.sh"
-# shellcheck source=lib/files.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/files.sh"
-# shellcheck source=lib/dependencies.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/dependencies.sh"
-# shellcheck source=lib/shell.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/shell.sh"
-# shellcheck source=lib/migration.sh
+# shellcheck source=/dev/null
 source "$PROJECT_DIR/scripts/lib/migration.sh"
 
 # =============================================================================
@@ -163,75 +163,28 @@ merge_rules_config() {
 	local new_config=$1
 	local existing_config=$2
 
-	# Try to install and use yq for YAML merging
-	if ensure_yq; then
-		# Extract custom sections from existing config
-		local temp_merged="${TEMP_DIR}/merged-config.yaml"
-
-		# Use yq to merge: take all from new config, but preserve custom arrays from existing
-		yq eval-all '
-			select(fileIndex == 0) as $new |
-			select(fileIndex == 1) as $old |
-			$new |
-			.commands = ($new.commands * $old.commands |
-				with_entries(
-					.value.rules.custom = ($old.commands[.key].rules.custom // [])
-				)
-			)
-		' "$new_config" "$existing_config" > "$temp_merged"
-
-		mv "$temp_merged" "$existing_config"
-		print_success "Merged config.yaml (preserved custom rules)"
-	else
-		# Fallback: manually preserve custom sections using grep/awk
-		print_warning "yq not available - using manual config merge"
-
-		local temp_merged="${TEMP_DIR}/merged-config.yaml"
-		local current_command=""
-		local in_custom=false
-
-		# Read new config and inject custom sections from old config
-		while IFS= read -r line; do
-			echo "$line" >> "$temp_merged"
-
-			# Detect command name
-			if [[ "$line" =~ ^[[:space:]]*([a-z_-]+):$ ]]; then
-				current_command="${BASH_REMATCH[1]}"
-			fi
-
-			# When we see "custom:" in new config, replace with custom from old config
-			if [[ "$line" =~ ^[[:space:]]*custom: ]]; then
-				# Extract custom section from old config for this command
-				if [[ -n "$current_command" ]] && [[ -f "$existing_config" ]]; then
-					# Use awk to extract custom rules for this command
-					local custom_rules=$(awk -v cmd="$current_command" '
-						/^[[:space:]]*[a-z_-]+:$/ {
-							current_cmd = $1;
-							gsub(/:/, "", current_cmd);
-							gsub(/^[[:space:]]+/, "", current_cmd);
-							in_target = (current_cmd == cmd);
-							in_custom = 0;
-						}
-						in_target && /^[[:space:]]*custom:/ { in_custom = 1; next; }
-						in_target && in_custom && /^[[:space:]]*-/ { print; }
-						in_target && in_custom && /^[[:space:]]*[a-z_-]+:/ { in_custom = 0; }
-					' "$existing_config")
-
-					# If we found custom rules, output them (remove the "custom: []" line we just wrote)
-					if [[ -n "$custom_rules" ]]; then
-						# Remove the last line (custom: [])
-						sed -i.bak '$ d' "$temp_merged" && rm -f "${temp_merged}.bak"
-						# Add custom: header and the rules
-						echo "      custom:" >> "$temp_merged"
-						echo "$custom_rules" >> "$temp_merged"
-					fi
-				fi
-			fi
-		done < "$new_config"
-
-		mv "$temp_merged" "$existing_config"
-		print_success "Merged config.yaml (manually preserved custom rules)"
+	# Ensure yq is available (it's a required dependency)
+	if ! ensure_yq; then
+		print_error "yq is required for config merging but could not be installed"
+		exit 1
 	fi
+
+	local temp_merged="${TEMP_DIR}/merged-config.yaml"
+
+	# Simple strategy: Take new config, replace custom arrays with old custom arrays
+	# This preserves user's custom rules while updating standard rules
+	# shellcheck disable=SC2016  # $k and $old are yq variables, not shell variables
+	yq eval-all '
+		select(fileIndex == 1) as $old |
+		select(fileIndex == 0) |
+		.commands |= (to_entries | map(
+			.key as $k |
+			.value.rules.custom = $old.commands[$k].rules.custom
+		) | from_entries)
+	' "$new_config" "$existing_config" >"$temp_merged"
+
+	mv "$temp_merged" "$existing_config"
+	print_success "Merged config.yaml (preserved custom rules)"
 }
 
 # =============================================================================
@@ -312,13 +265,19 @@ main() {
 
 				# Skip Python hook if Python not selected
 				if [[ $INSTALL_PYTHON =~ ^[Yy]$ ]] || [[ $file_path != *"file_checker_python.sh"* ]]; then
-					# Ask about settings.local.json if it already exists
+					# Ask about settings.local.json if it already exists (only in interactive mode)
 					if [[ $file_path == *"settings.local.json"* ]] && [[ -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
-						print_warning "settings.local.json already exists"
-						echo "This file may contain new features in this version."
-						read -r -p "Overwrite settings.local.json? (y/N): " -n 1 </dev/tty
-						echo
-						[[ ! $REPLY =~ ^[Yy]$ ]] && print_success "Kept existing settings.local.json" && continue
+						if [[ $NON_INTERACTIVE != "true" ]]; then
+							print_warning "settings.local.json already exists"
+							echo "This file may contain new features in this version."
+							read -r -p "Overwrite settings.local.json? (y/N): " -n 1 </dev/tty
+							echo
+							[[ ! $REPLY =~ ^[Yy]$ ]] && print_success "Kept existing settings.local.json" && continue
+						else
+							# In non-interactive mode, always keep existing settings
+							print_success "Kept existing settings.local.json"
+							continue
+						fi
 					fi
 
 					# Special handling for config.yaml to preserve custom rules
@@ -348,7 +307,7 @@ main() {
 	print_status "Setting up custom rules directories..."
 	for category in core extended workflow; do
 		local custom_dir="$PROJECT_DIR/.claude/rules/custom/$category"
-		if [[ ! -d "$custom_dir" ]]; then
+		if [[ ! -d $custom_dir ]]; then
 			mkdir -p "$custom_dir"
 			touch "$custom_dir/.gitkeep"
 			echo "   ✓ Created custom/$category/"
@@ -528,7 +487,7 @@ main() {
 	echo -e "${YELLOW}STEP 5: Start Building!${NC}"
 	echo ""
 	echo -e "   ${BLUE}For quick changes:${NC}"
-	echo "   → /quick           Fast development for fixes and refactoring"
+	echo "   → /quick           Fast development without spec-driven planning"
 	echo ""
 	echo -e "   ${BLUE}For complex features:${NC}"
 	echo "   → /plan            Create detailed spec with TDD"

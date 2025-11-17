@@ -44,6 +44,7 @@ jobs:
           chmod +x tests/e2e/test-install.sh
           chmod +x tests/e2e/test-migration.sh
           chmod +x tests/e2e/test-build-rules.sh
+          chmod +x tests/e2e/test-config-merge.sh
           chmod +x scripts/install.sh
           chmod +x scripts/build-rules.sh
 
@@ -61,6 +62,11 @@ jobs:
         run: |
           cd tests/e2e
           bash test-build-rules.sh
+
+      - name: Run E2E config merge tests
+        run: |
+          cd tests/e2e
+          bash test-config-merge.sh
 
       - name: Upload test logs on failure
         if: failure()

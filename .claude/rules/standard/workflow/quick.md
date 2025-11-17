@@ -14,10 +14,3 @@
 4. **Make changes**: Edit/Write files
 5. **Verify**: Run tests if applicable, check diagnostics
 6. **Store learnings** (if significant): `mcp__cipher__ask_cipher("Store: Fixed Y using Z pattern")`
-
-## Testing Guidelines (Relaxed)
-
-**TDD NOT enforced** - Use judgment:
-- Quick fixes: Test if touching critical paths
-- Refactoring: Ensure existing tests still pass
-- New features: Consider writing tests (or use /plan → /implement for full TDD)

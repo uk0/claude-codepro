@@ -4,9 +4,10 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# Change to workspace root if not already there
-if [[ -d "/workspaces/claude-codepro" ]]; then
-	cd /workspaces/claude-codepro || exit 1
+# Find git root and change to it (works in containers, local, any project)
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ -n "$GIT_ROOT" ]]; then
+	cd "$GIT_ROOT" || exit 1
 fi
 
 # Find THE most recently modified file (excluding cache/build dirs)
@@ -23,8 +24,8 @@ if [[ -z $files ]]; then
 	exit 0
 fi
 
-# Skip Python files (handled by Python hook), test files, and scripts directory
-if [[ $files == *.py ]] || [[ $files == *test* ]] || [[ $files == *scripts/* ]]; then
+# Skip Python files (handled by Python hook)
+if [[ $files == *.py ]]; then
 	exit 0
 fi
 

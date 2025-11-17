@@ -22,6 +22,7 @@ FAILED_TESTS=0
 PASSED_TESTS=0
 
 # Cleanup function
+# shellcheck disable=SC2329
 cleanup() {
 	if [[ -d $TEST_DIR ]]; then
 		rm -rf "$TEST_DIR"
@@ -43,11 +44,13 @@ print_test() {
 	echo -e "${YELLOW}▶ Testing: $1${NC}"
 }
 
+# shellcheck disable=SC2329
 print_success() {
 	echo -e "${GREEN}✓ $1${NC}"
 	((PASSED_TESTS++))
 }
 
+# shellcheck disable=SC2329
 print_error() {
 	echo -e "${RED}✗ $1${NC}"
 	((FAILED_TESTS++))
@@ -65,7 +68,9 @@ source_migration() {
 	mkdir -p "$TEMP_DIR"
 
 	# Source the libraries
+	# shellcheck source=/dev/null
 	source "$PROJECT_ROOT/scripts/lib/ui.sh"
+	# shellcheck source=/dev/null
 	source "$PROJECT_ROOT/scripts/lib/migration.sh"
 
 	# Re-define our test print functions to restore counter functionality
@@ -206,17 +211,19 @@ EOF
 
 	# Override the interactive prompt by providing Y input
 	print_test "Running migration with auto-accept"
-	if echo "Y" | run_migration 2>&1 | grep -q "Migration complete"; then
+	if printf "Y\n" | run_migration >migration.log 2>&1 && grep -q "Migration complete" migration.log; then
 		print_success "Migration executed successfully"
 	else
 		print_error "Migration did not complete successfully"
+		cat migration.log
 		return 1
 	fi
 
 	# Verify backup was created
 	print_test "Verifying backup was created"
-	local backup_dir=$(ls -d "$test_dir/.claude/rules.backup."* 2>/dev/null | head -1)
-	if [[ -d "$backup_dir" ]]; then
+	local backup_dir
+	backup_dir=$(find "$test_dir/.claude" -maxdepth 1 -type d -name "rules.backup.*" 2>/dev/null | head -1)
+	if [[ -d $backup_dir ]]; then
 		print_success "Backup directory created: $(basename "$backup_dir")"
 	else
 		print_error "Backup directory was not created"

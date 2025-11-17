@@ -115,7 +115,7 @@ test_non_interactive_install() {
 	export INSTALL_PYTHON=Y
 	export OVERWRITE_SETTINGS=N
 
-	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env 2>&1 | tee install.log; then
+	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env >install.log 2>&1; then
 		print_success "Installation completed without errors"
 	else
 		print_error "Installation failed with exit code $?"
@@ -195,10 +195,11 @@ test_python_support_flag() {
 	export INSTALL_PYTHON=N
 	export OVERWRITE_SETTINGS=N
 
-	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env 2>&1 | tee install.log; then
+	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env >install.log 2>&1; then
 		print_success "Installation completed without errors"
 	else
 		print_error "Installation failed with exit code $?"
+		cat install.log
 		return 1
 	fi
 
@@ -259,7 +260,7 @@ test_idempotency() {
 	export OVERWRITE_SETTINGS=N
 
 	print_test "First installation run"
-	if ! bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env 2>&1 | tee first-install.log >/dev/null; then
+	if ! bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env >first-install.log 2>&1; then
 		print_error "First installation run failed"
 		cat first-install.log
 		return 1
@@ -276,7 +277,7 @@ test_idempotency() {
 	echo "# Test marker" >>"$test_dir/.claude/settings.local.json"
 
 	print_test "Second installation run (should be idempotent)"
-	if ! bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env 2>&1 | tee second-install.log >/dev/null; then
+	if ! bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env >second-install.log 2>&1; then
 		print_error "Second installation run failed"
 		cat second-install.log
 		return 1
@@ -338,7 +339,7 @@ test_bootstrap_download() {
 
 	print_test "Running install.sh to trigger module downloads"
 
-	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env 2>&1 | tee install.log; then
+	if bash "$PROJECT_ROOT/scripts/install.sh" --local --non-interactive --skip-env >install.log 2>&1; then
 		print_success "Installation completed with module download"
 	else
 		print_error "Installation failed"

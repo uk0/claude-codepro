@@ -59,10 +59,10 @@ install_nodejs() {
 	# Install Node.js 22 (latest) using NVM
 	print_status "Installing Node.js 22.x (required for Claude Context)..."
 
-	# Install the latest Node.js 22.x version
-	nvm install 22
-	nvm use 22
-	nvm alias default 22
+	# Install the latest Node.js 22.x version (suppress nvm internal warnings)
+	nvm install 22 2>/dev/null || nvm install 22
+	nvm use 22 2>/dev/null || nvm use 22
+	nvm alias default 22 2>/dev/null || nvm alias default 22
 
 	# Verify installation
 	if command -v npm &>/dev/null; then

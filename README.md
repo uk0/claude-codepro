@@ -34,7 +34,7 @@ curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.3.4/scri
 
 **Quick Development** (For fast fixes, refactoring, experiments):
 
-- `/quick` - Fast, focused development without spec-driven overhead → No mandatory TDD (Sonnet 4.5)
+- `/quick` - Fast, focused development without spec-driven overhead → No planning required (Sonnet 4.5)
 
 **Spec-Driven Workflow** (For complex features requiring planning and testing):
 
@@ -93,7 +93,7 @@ curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.3.4/scri
 
 **For Quick Changes:**
 
-- Use `/quick` - Fast development for fixes, refactoring, or experiments without spec overhead
+- Use `/quick` - Fast development for fixes, refactoring, or experiments without spec-driven planning
 - TDD not enforced, but best practices still apply via core rules and auto-injected skills
 
 **For Complex Features (Spec-Driven & TDD):**
@@ -108,16 +108,19 @@ curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.3.4/scri
 The system uses a modular rules-based architecture that automatically generates slash commands and skills:
 
 **Standard Rules** (always updated by install script):
+
 - `.claude/rules/standard/core/` - Fundamental rules injected into all commands
 - `.claude/rules/standard/workflow/` - Command-specific behavior (plan.md, implement.md, verify.md, quick.md, remember.md)
 - `.claude/rules/standard/extended/` - Domain-specific rules auto-converted to individual skills
 
 **Custom Rules** (never touched by install script):
+
 - `.claude/rules/custom/core/` - Your custom fundamental rules
 - `.claude/rules/custom/workflow/` - Your custom command behaviors
 - `.claude/rules/custom/extended/` - Your custom skills (auto-converted like standard rules)
 
 **Configuration:**
+
 - `.claude/rules/config.yaml` - Defines which rules are included in which commands
   - `standard:` section - Lists standard rules (updated on install)
   - `custom:` section - Lists your custom rules (always preserved)

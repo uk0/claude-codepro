@@ -22,6 +22,7 @@ FAILED_TESTS=0
 PASSED_TESTS=0
 
 # Cleanup function
+# shellcheck disable=SC2329
 cleanup() {
 	if [[ -d $TEST_DIR ]]; then
 		rm -rf "$TEST_DIR"
@@ -110,7 +111,7 @@ EOF
 	# Run build-rules.sh
 	print_test "Running build-rules.sh"
 	cd "$test_dir"
-	if bash scripts/build-rules.sh 2>&1 | tee build.log; then
+	if bash scripts/build-rules.sh >build.log 2>&1; then
 		print_success "Build completed without errors"
 	else
 		print_error "Build failed"
@@ -120,21 +121,21 @@ EOF
 
 	# Verify rules were loaded
 	print_test "Verifying rules were loaded"
-	if grep -q "Total rules loaded: 3" build.log; then
+	if grep -q "Total: 3 rules" build.log; then
 		print_success "Correct number of rules loaded (3)"
 	else
 		print_error "Wrong number of rules loaded"
-		grep "Total rules loaded" build.log
+		grep "Total:.*rules" build.log
 		return 1
 	fi
 
 	# Verify skills were discovered
 	print_test "Verifying skills were discovered"
-	if grep -q "Total skills discovered: 1" build.log; then
+	if grep -q "Total: 1 skills" build.log; then
 		print_success "Correct number of skills discovered (1)"
 	else
 		print_error "Wrong number of skills discovered"
-		grep "Total skills discovered" build.log
+		grep "Total:.*skills" build.log
 		return 1
 	fi
 

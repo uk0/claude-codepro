@@ -9,14 +9,14 @@ needs_migration() {
 	local config_file="$PROJECT_DIR/.claude/rules/config.yaml"
 
 	# If config.yaml doesn't exist, no migration needed
-	[[ ! -f "$config_file" ]] && return 1
+	[[ ! -f $config_file ]] && return 1
 
 	# Check if config.yaml has new format (standard: or custom:)
 	if grep -q "standard:" "$config_file" || grep -q "custom:" "$config_file"; then
-		return 1  # Already migrated
+		return 1 # Already migrated
 	fi
 
-	return 0  # Migration needed
+	return 0 # Migration needed
 }
 
 # Run migration - backup old rules and wipe for fresh install
@@ -39,7 +39,13 @@ run_migration() {
 	echo "  2. Delete current .claude/rules folder"
 	echo "  3. Fresh rules will be downloaded"
 	echo ""
-	read -r -p "Continue with migration? (Y/n): " -n 1 </dev/tty
+
+	# Check if stdin is a terminal (interactive) or piped (non-interactive)
+	if [ -t 0 ]; then
+		read -r -p "Continue with migration? (Y/n): " -n 1 </dev/tty
+	else
+		read -r -p "Continue with migration? (Y/n): " -n 1
+	fi
 	echo ""
 	echo ""
 
@@ -57,7 +63,9 @@ run_migration() {
 	fi
 
 	# Create backup
-	local backup_dir="$PROJECT_DIR/.claude/rules.backup.$(date +%s)"
+	local timestamp
+	timestamp=$(date +%s)
+	local backup_dir="$PROJECT_DIR/.claude/rules.backup.$timestamp"
 	print_status "Creating backup at $(basename "$backup_dir")..."
 	cp -r "$rules_dir" "$backup_dir"
 	print_success "Backup created at: $backup_dir"

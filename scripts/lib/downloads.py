@@ -46,15 +46,13 @@ def download_file(
     Returns:
         True on success, False on failure
     """
-    # Create parent directories
+
     dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Use local files if in local mode
     if config.local_mode and config.local_repo_dir:
         source_file = config.local_repo_dir / repo_path
         if source_file.is_file():
             try:
-                # If source and dest are the same, just return success
                 if source_file.resolve() == dest_path.resolve():
                     return True
                 shutil.copy2(source_file, dest_path)
@@ -64,7 +62,6 @@ def download_file(
         else:
             return False
     else:
-        # Download from GitHub
         file_url = f"{config.repo_url}/raw/{config.repo_branch}/{repo_path}"
         try:
             with urllib.request.urlopen(file_url) as response:
@@ -88,24 +85,19 @@ def get_repo_files(dir_path: str, config: DownloadConfig) -> list[str]:
     Returns:
         List of file paths relative to repository root
     """
-    # Use local find if in local mode
+
     if config.local_mode and config.local_repo_dir:
         source_dir = config.local_repo_dir / dir_path
         if source_dir.is_dir():
-            # Find all files recursively and output relative paths
             files = []
             for file_path in source_dir.rglob("*"):
                 if file_path.is_file():
-                    # Get path relative to repo root
                     rel_path = file_path.relative_to(config.local_repo_dir)
                     files.append(str(rel_path))
             return files
         return []
 
-    # Download from GitHub API
     try:
-        # Extract owner/repo from URL
-        # URL format: https://github.com/owner/repo
         repo_path = config.repo_url.replace("https://github.com/", "")
         tree_url = f"https://api.github.com/repos/{repo_path}/git/trees/{config.repo_branch}?recursive=true"
 
@@ -116,7 +108,6 @@ def get_repo_files(dir_path: str, config: DownloadConfig) -> list[str]:
 
             data = json.loads(response.read().decode())
 
-            # Extract file paths matching the directory
             files = []
             if "tree" in data:
                 for item in data["tree"]:
@@ -157,11 +148,9 @@ def download_directory(
     count = 0
 
     for file_path in files:
-        # Check exclude patterns
         if any(pattern in file_path for pattern in exclude_patterns):
             continue
 
-        # Calculate destination path
         rel_path = Path(file_path).relative_to(repo_dir)
         dest_path = dest_dir / rel_path
 

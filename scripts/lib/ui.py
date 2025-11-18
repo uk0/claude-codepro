@@ -5,14 +5,12 @@ Provides color-coded terminal output for user feedback.
 """
 
 import sys
-from typing import Optional
 
-# ANSI Color codes
 BLUE = "\033[0;36m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[1;33m"
 RED = "\033[0;31m"
-NC = "\033[0m"  # No Color
+NC = "\033[0m"
 
 
 def print_status(message: str, file=None) -> None:
@@ -64,15 +62,16 @@ def supports_color() -> bool:
     """
     import os
 
-    if not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
         return False
 
-    term = os.environ.get('TERM', '')
-    return term != 'dumb' and term != ''
+    term = os.environ.get("TERM", "")
+    return term != "dumb" and term != ""
 
 
 def strip_colors(text: str) -> str:
     """Remove ANSI color codes from text."""
     import re
-    ansi_escape = re.compile(r'\033\[[0-9;]*m')
-    return ansi_escape.sub('', text)
+
+    ansi_escape = re.compile(r"\033\[[0-9;]*m")
+    return ansi_escape.sub("", text)

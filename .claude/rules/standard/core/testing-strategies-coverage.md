@@ -128,14 +128,14 @@ When implementing functionality:
 
 1. Search codebase for similar test patterns
 2. Determine test type (unit/integration/E2E) based on dependencies
-3. Write failing test first (TDD - see tdd-enforcement.md)
+3. Write failing test first (TDD)
 4. Reuse existing fixtures
 5. Follow naming convention
 6. Run test to verify failure
 7. Implement minimal code to pass
 8. Run all tests to prevent regressions
 9. Verify coverage ≥ 80%
-10. Execute actual program (see execution-verification.md)
+10. Execute actual program
 
 ### E2E Testing Patterns
 
@@ -169,7 +169,7 @@ Run actual pipeline, verify:
 # BAD - test2 depends on test1 running first
 def test1_create_user():
     create_user("test")
-    
+
 def test2_update_user():
     get_user("test")  # Assumes test1 ran
 ```

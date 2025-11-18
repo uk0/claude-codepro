@@ -44,14 +44,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl git bash ca-certificates jq
 
-      - name: Make test scripts executable
+      - name: Set up Python environment
         run: |
-          chmod +x tests/e2e/test-install.sh
-          chmod +x tests/e2e/test-migration.sh
-          chmod +x tests/e2e/test-build-rules.sh
-          chmod +x tests/e2e/test-config-merge.sh
-          chmod +x scripts/install.sh
-          chmod +x .claude/rules/build.sh
+          python3 -m pip install --break-system-packages pyyaml || true
 
       - name: Run E2E installation tests
         run: |
@@ -120,9 +115,9 @@ jobs:
             || echo "main")
 
           if [ -f README.md ]; then
-            PATTERN="maxritter/claude-codepro/[^/]*/scripts/install.sh"
+            PATTERN="maxritter/claude-codepro/[^/]*/scripts/install.py"
             REPLACE="maxritter/claude-codepro/${LATEST_TAG}/scripts/"
-            REPLACE="${REPLACE}install.sh"
+            REPLACE="${REPLACE}install.py"
             sed -i "s|${PATTERN}|${REPLACE}|g" README.md
 
             if git diff --quiet README.md; then

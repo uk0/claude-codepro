@@ -12,7 +12,7 @@ labels: bug, needs-triage
 
 <!-- Provide detailed steps to reproduce the issue -->
 
-1. Run installation: `curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/main/scripts/install.sh | bash`
+1. Run installation: `curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/main/scripts/install.py | python3`
 2. Configure: `...`
 3. Run command: `...`
 4. See error
@@ -24,7 +24,7 @@ labels: bug, needs-triage
 ## Environment
 
 - **OS**: <!-- e.g., macOS 14.5, Ubuntu 22.04, Windows 11 -->
-- **Shell**: <!-- e.g., zsh, bash, fish -->
+- **Shell**: <!-- e.g., zsh, bash -->
 - **Node.js version**: <!-- Run: node --version -->
 - **Claude Code version**: <!-- Run: claude --version -->
 - **Installation method**: <!-- curl script / manual -->

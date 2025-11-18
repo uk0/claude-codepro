@@ -21,6 +21,19 @@
       }
     ],
     "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "sed -i 's/^VERSION = \".*\"/VERSION = \"${nextRelease.version}\"/' scripts/install.py"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["scripts/install.py"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
     "@semantic-release/github"
   ]
 }

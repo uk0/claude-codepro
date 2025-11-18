@@ -20,10 +20,10 @@ Start shipping systematically with Spec-Driven Development, Skills, TDD, Semanti
 
 ## 🚀 Getting Started
 
-Run this shell command in **any project directory** for a **fresh install** or to **update to the latest version**:
+Run this command in **any project directory** for a **fresh install** or to **update to the latest version**:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.3.12/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.4.0/scripts/install.py | python3
 ```
 
 **Recommended:** Install via Dev Container for complete isolation from your host system. The installer will offer to set up the dev container configuration automatically.
@@ -74,7 +74,7 @@ curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/v2.3.12/scr
 - **Dev Container Support** - Isolated development environment with pre-configured tools and extensions
 - **Automated Setup Script** - Installs and configures everything in one command
 - **Global Tools** - Python tools, qlty, Claude Code, Cipher, Newman installed globally
-- **Shell Integration** - Auto-configures bash, zsh, and fish with `ccp` alias
+- **Shell Integration** - Auto-configures bash and zsh with `ccp` alias
 - **IDE Compatible** - Works with VS Code, Cursor, Windsurf, or any terminal
 
 ---

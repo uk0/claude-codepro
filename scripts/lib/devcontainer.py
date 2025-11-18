@@ -63,7 +63,6 @@ def install_devcontainer(
         else:
             ui.print_warning(f"Failed to download {file_path}")
 
-    # Make postCreateCommand.sh executable
     post_create = project_dir / ".devcontainer" / "postCreateCommand.sh"
     if post_create.exists():
         post_create.chmod(0o755)
@@ -86,15 +85,13 @@ def offer_devcontainer_setup(
         config: Download configuration
         non_interactive: Skip interactive prompts
     """
-    # Skip if already in dev container
+
     if is_in_devcontainer():
         return
 
-    # Skip if .devcontainer already exists
     if has_devcontainer(project_dir):
         return
 
-    # Skip if non-interactive
     if non_interactive:
         return
 
@@ -111,7 +108,6 @@ def offer_devcontainer_setup(
     print("  ✗ Global package installations")
     print("")
 
-    # Interactive prompt
     if sys.stdin.isatty():
         reply = input("Install dev container configuration? (Y/n): ").strip()
     else:
@@ -119,22 +115,17 @@ def offer_devcontainer_setup(
 
     print("")
 
-    # Default to Y
     if not reply:
         reply = "Y"
 
     if reply.lower() not in ["y", "yes"]:
-        ui.print_warning(
-            "Proceeding with local installation (may interfere with system packages)"
-        )
+        ui.print_warning("Proceeding with local installation (may interfere with system packages)")
         print("")
         return
 
-    # Install dev container files
     install_devcontainer(project_dir, config)
     print("")
 
-    # Provide instructions
     ui.print_section("Dev Container Next Steps")
     print("The .devcontainer configuration has been installed.")
     print("")
@@ -150,10 +141,7 @@ def offer_devcontainer_setup(
     print("")
     print("  5. Installation will continue automatically inside the container")
     print("")
-    print(
-        f"{ui.YELLOW}Press Enter to exit and set up dev container, "
-        f"or Ctrl+C to continue local installation{ui.NC}"
-    )
+    print(f"{ui.YELLOW}Press Enter to exit and set up dev container, or Ctrl+C to continue local installation{ui.NC}")
 
     if sys.stdin.isatty():
         _ = input()

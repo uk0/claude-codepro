@@ -154,7 +154,7 @@ Return `429 Too Many Requests` when limit exceeded.
 - Check required fields before processing
 - Validate formats (email, phone, URL)
 - Enforce business rules
-- Return specific error messages (see input-validation.md)
+- Return specific error messages
 
 **Never expose internal errors to clients:**
 - ❌ Database error messages

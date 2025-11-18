@@ -21,7 +21,7 @@ def load_nvm() -> tuple[bool, str | None]:
     Returns:
         Tuple of (success, nvm_dir_path)
     """
-    # Common NVM installation locations
+
     home = Path.home()
     nvm_locations = [
         home / ".nvm",
@@ -35,7 +35,6 @@ def load_nvm() -> tuple[bool, str | None]:
 
         nvm_sh = nvm_dir / "nvm.sh"
         if nvm_sh.exists():
-            # Set NVM_DIR environment variable
             os.environ["NVM_DIR"] = str(nvm_dir)
             return True, str(nvm_dir)
 
@@ -49,7 +48,7 @@ def install_nodejs() -> None:
     Installs NVM if not present, then installs Node.js 22.x.
     Exits on failure.
     """
-    # Try to load existing NVM installation
+
     nvm_loaded, nvm_dir = load_nvm()
 
     if nvm_loaded:
@@ -57,20 +56,14 @@ def install_nodejs() -> None:
     else:
         ui.print_status("Installing NVM (Node Version Manager)...")
 
-        # Install NVM
         try:
             install_cmd = "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
-            result = subprocess.run(
-                install_cmd, shell=True, check=True, capture_output=True, text=True
-            )
+            result = subprocess.run(install_cmd, shell=True, check=True, capture_output=True, text=True)
 
-            # Try to load the newly installed NVM
             nvm_loaded, nvm_dir = load_nvm()
             if not nvm_loaded:
                 ui.print_error("NVM installation failed or unable to load NVM")
-                ui.print_error(
-                    "Please install NVM manually: https://github.com/nvm-sh/nvm"
-                )
+                ui.print_error("Please install NVM manually: https://github.com/nvm-sh/nvm")
                 sys.exit(1)
 
             ui.print_success(f"Installed NVM at {nvm_dir}")
@@ -80,19 +73,17 @@ def install_nodejs() -> None:
             ui.print_error("Please install NVM manually: https://github.com/nvm-sh/nvm")
             sys.exit(1)
 
-    # Install Node.js 22 using NVM
-    # NVM is a shell function, so we need to run it through bash
     ui.print_status("Installing Node.js 22.x (required for Claude Context)...")
 
     nvm_commands = f"""
-export NVM_DIR="{os.environ.get("NVM_DIR")}"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-nvm install 22 2>/dev/null || nvm install 22
-nvm use 22 2>/dev/null || nvm use 22
-nvm alias default 22 2>/dev/null || nvm alias default 22
-node --version
-npm --version
-"""
+                    export NVM_DIR="{os.environ.get("NVM_DIR")}"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm install 22 2>/dev/null || nvm install 22
+                    nvm use 22 2>/dev/null || nvm use 22
+                    nvm alias default 22 2>/dev/null || nvm alias default 22
+                    node --version
+                    npm --version
+                    """
 
     try:
         result = subprocess.run(
@@ -103,26 +94,17 @@ npm --version
             text=True,
         )
 
-        # Verify installation
         if utils.command_exists("npm"):
-            # Extract version from output
             lines = result.stdout.strip().split("\n")
             if len(lines) >= 2:
                 node_version = lines[-2].strip()
                 npm_version = lines[-1].strip()
-                ui.print_success(
-                    f"Installed Node.js {node_version} and npm {npm_version}"
-                )
+                ui.print_success(f"Installed Node.js {node_version} and npm {npm_version}")
 
-                # Verify it's version 22.x
                 if not node_version.startswith("v22."):
-                    ui.print_warning(
-                        f"Warning: Expected Node.js 22.x but got {node_version}"
-                    )
+                    ui.print_warning(f"Warning: Expected Node.js 22.x but got {node_version}")
         else:
-            ui.print_error(
-                "npm installation failed. Please install Node.js manually using NVM"
-            )
+            ui.print_error("npm installation failed. Please install Node.js manually using NVM")
             sys.exit(1)
 
     except Exception as e:
@@ -142,7 +124,6 @@ def install_uv() -> None:
         install_cmd = "curl -LsSf https://astral.sh/uv/install.sh | sh"
         subprocess.run(install_cmd, shell=True, check=True, capture_output=True)
 
-        # Add uv to PATH for current session
         cargo_bin = Path.home() / ".cargo" / "bin"
         os.environ["PATH"] = f"{cargo_bin}:{os.environ.get('PATH', '')}"
 
@@ -192,17 +173,14 @@ def install_qlty(project_dir: Path) -> None:
     ui.print_status("Installing qlty...")
 
     try:
-        # Install qlty
         install_cmd = "curl -s https://qlty.sh | sh"
         subprocess.run(install_cmd, shell=True, check=True, capture_output=True)
 
-        # Add to PATH
         qlty_install = Path.home() / ".qlty"
         qlty_bin = qlty_install / "bin"
         os.environ["QLTY_INSTALL"] = str(qlty_install)
         os.environ["PATH"] = f"{qlty_bin}:{os.environ.get('PATH', '')}"
 
-        # Initialize qlty for this project
         qlty_cmd = qlty_bin / "qlty"
         if qlty_cmd.exists():
             subprocess.run(
@@ -257,22 +235,17 @@ def install_cipher() -> None:
             text=True,
         )
 
-        # Verify installation was successful
         if utils.command_exists("cipher"):
             ui.print_success("Installed Cipher")
         else:
             ui.print_warning("Cipher was installed but command not found in PATH")
-            ui.print_warning(
-                "You may need to restart your shell or add npm global bin to PATH"
-            )
+            ui.print_warning("You may need to restart your shell or add npm global bin to PATH")
             print("   Run: npm config get prefix")
             print("   Then add <prefix>/bin to your PATH")
 
     except subprocess.CalledProcessError:
         ui.print_error("Failed to install Cipher")
-        ui.print_warning(
-            "You can install it manually later with: npm install -g @byterover/cipher"
-        )
+        ui.print_warning("You can install it manually later with: npm install -g @byterover/cipher")
 
 
 def install_newman() -> None:

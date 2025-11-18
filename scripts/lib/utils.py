@@ -28,9 +28,8 @@ def cleanup(temp_dir: Path | None = None) -> None:
         try:
             shutil.rmtree(temp_dir)
         except Exception:
-            pass  # Best effort cleanup
+            pass
 
-    # Restore cursor visibility
     try:
         if sys.platform != "win32":
             _ = subprocess.run(["tput", "cnorm"], capture_output=True, check=False)
@@ -109,9 +108,7 @@ def install_package(package: str, display_name: str | None = None) -> bool:
     pkg_manager = get_package_manager()
 
     if not pkg_manager:
-        ui.print_error(
-            f"No supported package manager found. Please install {display_name} manually"
-        )
+        ui.print_error(f"No supported package manager found. Please install {display_name} manually")
         return False
 
     ui.print_status(f"Installing {display_name}...")
@@ -125,10 +122,7 @@ def install_package(package: str, display_name: str | None = None) -> bool:
                 check=False,
             )
         elif pkg_manager == "apt-get":
-            # Update package list first
-            _ = subprocess.run(
-                ["sudo", "apt-get", "update"], capture_output=True, check=False
-            )
+            _ = subprocess.run(["sudo", "apt-get", "update"], capture_output=True, check=False)
             result = subprocess.run(
                 ["sudo", "apt-get", "install", "-y", package],
                 capture_output=True,
@@ -175,12 +169,9 @@ def check_required_dependencies() -> bool:
     """
     missing: list[str] = []
 
-    # Check for curl (critical for downloads)
     if not command_exists("curl"):
         missing.append("curl")
 
-    # Check for basic POSIX tools (should always be available)
-    # Note: In Python we don't need most of these, but check for curl
     for cmd in ["mkdir", "cp", "mv", "rm", "chmod", "find", "grep"]:
         if not command_exists(cmd):
             missing.append(cmd)
@@ -192,15 +183,11 @@ def check_required_dependencies() -> bool:
         print("")
 
         if is_macos():
-            print(
-                "  macOS: These tools should be pre-installed. Try reinstalling Command Line Tools:"
-            )
+            print("  macOS: These tools should be pre-installed. Try reinstalling Command Line Tools:")
             print("  xcode-select --install")
         elif command_exists("apt-get"):
             print("  Ubuntu/Debian:")
-            print(
-                "  sudo apt-get update && sudo apt-get install -y curl coreutils findutils"
-            )
+            print("  sudo apt-get update && sudo apt-get install -y curl coreutils findutils")
         elif command_exists("yum"):
             print("  RHEL/CentOS:")
             print("  sudo yum install -y curl coreutils findutils")
@@ -233,9 +220,7 @@ def run_command(
     Returns:
         CompletedProcess instance with text output
     """
-    return subprocess.run(
-        cmd, check=check, capture_output=capture_output, text=True, shell=shell, cwd=cwd
-    )
+    return subprocess.run(cmd, check=check, capture_output=capture_output, text=True, shell=shell, cwd=cwd)
 
 
 def get_python_version() -> str:

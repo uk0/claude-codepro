@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """
 Claude CodePro Installation & Update Script
 
-Idempotent: Safe to run multiple times (install + update)
-Supports: macOS, Linux, WSL
+The VERSION constant below is automatically updated by releasebot during releases.
+When installing from a version tag, all files are downloaded from that same version.
 """
 
 from __future__ import annotations
@@ -17,11 +16,13 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-# Repository configuration
+# This VERSION is updated by releasebot during release
+# - In main branch: VERSION = "main"
+# - In release tags: VERSION = "v2.4.0" (or whatever the release version is)
+VERSION = "main"
 REPO_URL = "https://github.com/maxritter/claude-codepro"
-REPO_BRANCH = "main"
 
-# Library modules to bootstrap
+
 LIB_MODULES = [
     "ui.py",
     "utils.py",
@@ -32,6 +33,21 @@ LIB_MODULES = [
     "migration.py",
     "env_setup.py",
     "devcontainer.py",
+]
+
+PYTHON_PERMISSIONS = [
+    "Bash(basedpyright:*)",
+    "Bash(mypy:*)",
+    "Bash(python tests:*)",
+    "Bash(python:*)",
+    "Bash(pyright:*)",
+    "Bash(pytest:*)",
+    "Bash(ruff check:*)",
+    "Bash(ruff format:*)",
+    "Bash(uv add:*)",
+    "Bash(uv pip show:*)",
+    "Bash(uv pip:*)",
+    "Bash(uv run:*)",
 ]
 
 
@@ -62,8 +78,7 @@ def bootstrap_download(repo_path: str, dest_path: Path, local_mode: bool, local_
                 return False
         return False
     else:
-        # Download from GitHub
-        file_url = f"{REPO_URL}/raw/{REPO_BRANCH}/{repo_path}"
+        file_url = f"{REPO_URL}/raw/{VERSION}/{repo_path}"
         try:
             with urllib.request.urlopen(file_url) as response:
                 if response.status == 200:
@@ -83,7 +98,6 @@ def download_lib_modules(project_dir: Path, local_mode: bool, local_repo_dir: Pa
         repo_path = f"scripts/lib/{module}"
         dest_path = lib_dir / module
 
-        # Skip if file already exists (e.g., running install from repo directory)
         if dest_path.exists():
             continue
 
@@ -91,9 +105,154 @@ def download_lib_modules(project_dir: Path, local_mode: bool, local_repo_dir: Pa
             print(f"Warning: Failed to download lib/{module}", file=sys.stderr)
 
 
+def generate_settings_file(template_file: Path, settings_file: Path, project_dir: Path, non_interactive: bool) -> None:
+    """
+    Generate settings.local.json from template.
+
+    Args:
+        template_file: Path to settings.local.template.json
+        settings_file: Path to settings.local.json
+        project_dir: Project directory for path substitution
+        non_interactive: Whether running in non-interactive mode
+    """
+    if not template_file.exists():
+        # Import ui module (assumes it's already imported in main)
+        from lib import ui
+
+        ui.print_warning("settings.local.template.json not found, skipping generation")
+        return
+
+    from lib import ui
+
+    if settings_file.exists():
+        should_regenerate = False
+        if not non_interactive:
+            ui.print_warning("settings.local.json already exists")
+            print("This file may contain new features in this version.")
+            regen = input("Regenerate settings.local.json from template? (y/N): ").strip()
+            should_regenerate = regen.lower() in ["y", "yes"]
+        else:
+            overwrite = os.getenv("OVERWRITE_SETTINGS", "N")
+            should_regenerate = overwrite.upper() in ["Y", "YES"]
+
+        if should_regenerate:
+            template_content = template_file.read_text()
+            settings_content = template_content.replace("{{PROJECT_DIR}}", str(project_dir))
+            settings_file.write_text(settings_content)
+            ui.print_success("Regenerated settings.local.json with absolute paths")
+        else:
+            ui.print_success("Kept existing settings.local.json")
+    else:
+        template_content = template_file.read_text()
+        settings_content = template_content.replace("{{PROJECT_DIR}}", str(project_dir))
+        settings_file.write_text(settings_content)
+        ui.print_success("Generated settings.local.json with absolute paths")
+
+
+def remove_python_settings(settings_file: Path) -> None:
+    """
+    Remove Python-specific hooks and permissions from settings.local.json.
+
+    Args:
+        settings_file: Path to settings.local.json
+    """
+    if not settings_file.exists():
+        return
+
+    from lib import ui
+
+    ui.print_status("Removing Python hook from settings.local.json...")
+
+    try:
+        settings_data = json.loads(settings_file.read_text())
+
+        if "hooks" in settings_data and "PostToolUse" in settings_data["hooks"]:
+            for hook_group in settings_data["hooks"]["PostToolUse"]:
+                if "hooks" in hook_group:
+                    hook_group["hooks"] = [
+                        h for h in hook_group["hooks"] if "file_checker_python.py" not in h.get("command", "")
+                    ]
+
+        if "permissions" in settings_data and "allow" in settings_data["permissions"]:
+            settings_data["permissions"]["allow"] = [
+                p for p in settings_data["permissions"]["allow"] if p not in PYTHON_PERMISSIONS
+            ]
+
+        settings_file.write_text(json.dumps(settings_data, indent=2) + "\n")
+        ui.print_success("Configured settings.local.json without Python support")
+    except Exception as e:
+        ui.print_warning(f"Failed to remove Python settings: {e}. You may need to manually edit settings.local.json")
+
+
+def install_claude_files(project_dir: Path, config, install_python: str, temp_dir: Path, local_mode: bool) -> int:
+    """
+    Install .claude files from repository.
+
+    Args:
+        project_dir: Project directory
+        config: Download configuration
+        install_python: Whether to install Python support ("Y"/"N")
+        temp_dir: Temporary directory for downloads
+        local_mode: Whether running in local mode (skip cleaning to preserve source files)
+
+    Returns:
+        Number of files installed
+    """
+    from lib import downloads, files, ui
+
+    # Only clean standard directories when NOT in local mode
+    # In local mode, we're working with the source repository and shouldn't delete files
+    if not local_mode:
+        ui.print_status("Cleaning standard rules directories...")
+        standard_dirs = [
+            project_dir / ".claude" / "rules" / "standard" / "core",
+            project_dir / ".claude" / "rules" / "standard" / "extended",
+            project_dir / ".claude" / "rules" / "standard" / "workflow",
+        ]
+        for std_dir in standard_dirs:
+            if std_dir.exists():
+                import shutil
+
+                shutil.rmtree(std_dir)
+                std_dir.mkdir(parents=True, exist_ok=True)
+
+    ui.print_status("Installing .claude files...")
+
+    file_count = 0
+    claude_files = downloads.get_repo_files(".claude", config)
+
+    for file_path in claude_files:
+        if not file_path:
+            continue
+
+        if "rules/custom/" in file_path:
+            continue
+
+        if "settings.local.json" in file_path and "settings.local.template.json" not in file_path:
+            continue
+
+        if install_python.lower() not in ["y", "yes"] and "file_checker_python.py" in file_path:
+            continue
+
+        if "rules/config.yaml" in file_path and (project_dir / ".claude" / "rules" / "config.yaml").exists():
+            temp_config = temp_dir / "config.yaml"
+            if downloads.download_file(file_path, temp_config, config):
+                files.merge_yaml_config(temp_config, project_dir / ".claude" / "rules" / "config.yaml")
+                file_count += 1
+                print("   ✓ config.yaml (merged with custom rules)")
+            continue
+
+        dest_file = project_dir / file_path
+        if downloads.download_file(file_path, dest_file, config):
+            file_count += 1
+            print(f"   ✓ {Path(file_path).name}")
+
+    return file_count
+
+
 def main() -> None:
     """Main installation flow."""
-    # Parse arguments
+
     parser = argparse.ArgumentParser(description="Claude CodePro Installation Script")
     parser.add_argument("--non-interactive", action="store_true", help="Run without interactive prompts")
     parser.add_argument("--skip-env", action="store_true", help="Skip environment setup (API keys)")
@@ -110,27 +269,26 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Determine paths
+    if not args.non_interactive and not sys.stdin.isatty():
+        args.non_interactive = True
+        print("⚠ Detected non-interactive environment (stdin not a TTY), enabling non-interactive mode")
+        print("")
+
     project_dir = Path.cwd()
 
-    # Handle local mode
     local_mode = args.local
     local_repo_dir: Path | None = None
     if local_mode:
         if args.local_repo_dir:
             local_repo_dir = Path(args.local_repo_dir).resolve()
         else:
-            # Auto-detect: script is in scripts/, so parent is repo root
             script_location = Path(__file__).parent.resolve()
             local_repo_dir = script_location.parent
 
-    # Download library modules
     download_lib_modules(project_dir, local_mode, local_repo_dir)
 
-    # Add project scripts directory to Python path
     sys.path.insert(0, str(project_dir / "scripts"))
 
-    # Now we can import lib modules
     from lib import (
         dependencies,
         devcontainer,
@@ -143,35 +301,28 @@ def main() -> None:
         utils,
     )
 
-    # Create temp directory
     temp_dir = Path(tempfile.mkdtemp())
 
     try:
-        # Setup download configuration
         config = downloads.DownloadConfig(
             repo_url=REPO_URL,
-            repo_branch=REPO_BRANCH,
+            repo_branch=VERSION,
             local_mode=local_mode,
             local_repo_dir=local_repo_dir,
         )
 
-        # Print welcome banner
         ui.print_section("Claude CodePro Installation")
 
-        # Check required dependencies
         if not utils.check_required_dependencies():
             sys.exit(1)
 
         ui.print_status(f"Installing into: {project_dir}")
         print("")
 
-        # Offer dev container setup early (exits if user chooses container)
         devcontainer.offer_devcontainer_setup(project_dir, config, args.non_interactive)
 
-        # Run migration if needed (must be before file installation)
         migration.run_migration(project_dir, args.non_interactive)
 
-        # Ask about Python support
         if args.non_interactive:
             install_python = os.getenv("INSTALL_PYTHON", "Y")
             ui.print_status(f"Non-interactive mode: Python support = {install_python}")
@@ -183,60 +334,10 @@ def main() -> None:
             print("")
             print("")
 
-        # Install Claude CodePro Files
         ui.print_section("Installing Claude CodePro Files")
 
-        # Clean standard rules directories (to remove old/deleted rules)
-        ui.print_status("Cleaning standard rules directories...")
-        standard_dirs = [
-            project_dir / ".claude" / "rules" / "standard" / "core",
-            project_dir / ".claude" / "rules" / "standard" / "extended",
-            project_dir / ".claude" / "rules" / "standard" / "workflow",
-        ]
-        for std_dir in standard_dirs:
-            if std_dir.exists():
-                import shutil
+        file_count = install_claude_files(project_dir, config, install_python, temp_dir, local_mode)
 
-                shutil.rmtree(std_dir)
-                std_dir.mkdir(parents=True, exist_ok=True)
-
-        ui.print_status("Installing .claude files...")
-
-        # Download .claude directory (update existing files, preserve settings.local.json and custom rules)
-        file_count = 0
-        claude_files = downloads.get_repo_files(".claude", config)
-
-        for file_path in claude_files:
-            if not file_path:
-                continue
-
-            # Skip custom rules (never overwrite)
-            if "rules/custom/" in file_path:
-                continue
-
-            # Skip settings.local.json (will be generated from template)
-            if "settings.local.json" in file_path and "settings.local.template.json" not in file_path:
-                continue
-
-            # Skip Python hook if Python not selected
-            if install_python.lower() not in ["y", "yes"] and "file_checker_python.sh" in file_path:
-                continue
-
-            # Special handling for config.yaml to preserve custom rules
-            if "rules/config.yaml" in file_path and (project_dir / ".claude" / "rules" / "config.yaml").exists():
-                temp_config = temp_dir / "config.yaml"
-                if downloads.download_file(file_path, temp_config, config):
-                    files.merge_yaml_config(temp_config, project_dir / ".claude" / "rules" / "config.yaml")
-                    file_count += 1
-                    print("   ✓ config.yaml (merged with custom rules)")
-                continue
-
-            dest_file = project_dir / file_path
-            if downloads.download_file(file_path, dest_file, config):
-                file_count += 1
-                print(f"   ✓ {Path(file_path).name}")
-
-        # Create custom rules directories if they don't exist
         ui.print_status("Setting up custom rules directories...")
         for category in ["core", "extended", "workflow"]:
             custom_dir = project_dir / ".claude" / "rules" / "custom" / category
@@ -245,86 +346,15 @@ def main() -> None:
                 (custom_dir / ".gitkeep").touch()
                 print(f"   ✓ Created custom/{category}/")
 
-        # Generate settings.local.json from template
         ui.print_status("Generating settings.local.json from template...")
         template_file = project_dir / ".claude" / "settings.local.template.json"
         settings_file = project_dir / ".claude" / "settings.local.json"
 
-        if template_file.exists():
-            if settings_file.exists():
-                if not args.non_interactive:
-                    ui.print_warning("settings.local.json already exists")
-                    print("This file may contain new features in this version.")
-                    regen = input("Regenerate settings.local.json from template? (y/N): ").strip()
-                    if regen.lower() not in ["y", "yes"]:
-                        ui.print_success("Kept existing settings.local.json")
-                    else:
-                        template_content = template_file.read_text()
-                        settings_content = template_content.replace("{{PROJECT_DIR}}", str(project_dir))
-                        settings_file.write_text(settings_content)
-                        ui.print_success("Regenerated settings.local.json with absolute paths")
-                else:
-                    # In non-interactive mode, check OVERWRITE_SETTINGS env var
-                    overwrite = os.getenv("OVERWRITE_SETTINGS", "N")
-                    if overwrite.upper() in ["Y", "YES"]:
-                        template_content = template_file.read_text()
-                        settings_content = template_content.replace("{{PROJECT_DIR}}", str(project_dir))
-                        settings_file.write_text(settings_content)
-                        ui.print_success("Regenerated settings.local.json with absolute paths")
-                    else:
-                        ui.print_success("Kept existing settings.local.json")
-            else:
-                # First time installation - always generate
-                template_content = template_file.read_text()
-                settings_content = template_content.replace("{{PROJECT_DIR}}", str(project_dir))
-                settings_file.write_text(settings_content)
-                ui.print_success("Generated settings.local.json with absolute paths")
-        else:
-            ui.print_warning("settings.local.template.json not found, skipping generation")
+        generate_settings_file(template_file, settings_file, project_dir, args.non_interactive)
 
-        # Remove Python hook from settings.local.json if Python not selected
-        if install_python.lower() not in ["y", "yes"] and settings_file.exists():
-            ui.print_status("Removing Python hook from settings.local.json...")
+        if install_python.lower() not in ["y", "yes"]:
+            remove_python_settings(settings_file)
 
-            try:
-                settings_data = json.loads(settings_file.read_text())
-
-                # Remove Python hook from PostToolUse
-                if "hooks" in settings_data and "PostToolUse" in settings_data["hooks"]:
-                    for hook_group in settings_data["hooks"]["PostToolUse"]:
-                        if "hooks" in hook_group:
-                            hook_group["hooks"] = [
-                                h for h in hook_group["hooks"] if "file_checker_python.sh" not in h.get("command", "")
-                            ]
-
-                # Remove Python-related permissions
-                python_permissions = [
-                    "Bash(basedpyright:*)",
-                    "Bash(mypy:*)",
-                    "Bash(python tests:*)",
-                    "Bash(python:*)",
-                    "Bash(pyright:*)",
-                    "Bash(pytest:*)",
-                    "Bash(ruff check:*)",
-                    "Bash(ruff format:*)",
-                    "Bash(uv add:*)",
-                    "Bash(uv pip show:*)",
-                    "Bash(uv pip:*)",
-                    "Bash(uv run:*)",
-                ]
-                if "permissions" in settings_data and "allow" in settings_data["permissions"]:
-                    settings_data["permissions"]["allow"] = [
-                        p for p in settings_data["permissions"]["allow"] if p not in python_permissions
-                    ]
-
-                settings_file.write_text(json.dumps(settings_data, indent=2) + "\n")
-                ui.print_success("Configured settings.local.json without Python support")
-            except Exception as e:
-                ui.print_warning(
-                    f"Failed to remove Python settings: {e}. You may need to manually edit settings.local.json"
-                )
-
-        # Make hooks executable
         hooks_dir = project_dir / ".claude" / "hooks"
         if hooks_dir.exists():
             for hook_file in hooks_dir.glob("*.sh"):
@@ -333,7 +363,6 @@ def main() -> None:
         ui.print_success(f"Installed {file_count} .claude files")
         print("")
 
-        # Install other configuration directories
         if not (project_dir / ".cipher").exists():
             files.install_directory(".cipher", project_dir, config)
             print("")
@@ -342,35 +371,26 @@ def main() -> None:
             files.install_directory(".qlty", project_dir, config)
             print("")
 
-        # Install MCP configurations
         files.merge_mcp_config(".mcp.json", project_dir / ".mcp.json", config, temp_dir)
         files.merge_mcp_config(".mcp-funnel.json", project_dir / ".mcp-funnel.json", config, temp_dir)
         print("")
 
-        # Install scripts
         files.install_file(
-            ".claude/rules/build.sh",
-            project_dir / ".claude" / "rules" / "build.sh",
+            ".claude/rules/build.py",
+            project_dir / ".claude" / "rules" / "build.py",
             config,
         )
 
-        # Make scripts executable
-        for script_file in (project_dir / "scripts").glob("*.sh"):
-            script_file.chmod(0o755)
-        for lib_script in (project_dir / "scripts" / "lib").glob("*.sh"):
-            lib_script.chmod(0o755)
-        build_script = project_dir / ".claude" / "rules" / "build.sh"
+        build_script = project_dir / ".claude" / "rules" / "build.py"
         if build_script.exists():
             build_script.chmod(0o755)
         print("")
 
-        # Create .nvmrc for Node.js version management
         ui.print_status("Creating .nvmrc for Node.js 22...")
         (project_dir / ".nvmrc").write_text("22\n")
         ui.print_success("Created .nvmrc")
         print("")
 
-        # Environment Setup
         if args.skip_env or args.non_interactive:
             ui.print_section("Environment Setup")
             ui.print_status("Skipping interactive environment setup (non-interactive mode)")
@@ -380,14 +400,11 @@ def main() -> None:
             ui.print_section("Environment Setup")
             env_setup.setup_env_file(project_dir)
 
-        # Install Dependencies
         ui.print_section("Installing Dependencies")
 
-        # Install Node.js first (required for npm packages)
         dependencies.install_nodejs()
         print("")
 
-        # Install Python tools if selected
         if install_python.lower() in ["y", "yes"]:
             dependencies.install_uv()
             print("")
@@ -410,22 +427,20 @@ def main() -> None:
         dependencies.install_dotenvx()
         print("")
 
-        # Build Rules
         ui.print_section("Building Rules")
-        build_script = project_dir / ".claude" / "rules" / "build.sh"
+        build_script = project_dir / ".claude" / "rules" / "build.py"
         if build_script.exists():
             ui.print_status("Building Claude Code commands and skills...")
             try:
-                subprocess.run(["bash", str(build_script)], check=True, capture_output=True)
+                subprocess.run([sys.executable, str(build_script)], check=True, capture_output=True)
                 ui.print_success("Built commands and skills")
             except subprocess.CalledProcessError:
                 ui.print_error("Failed to build commands and skills")
-                ui.print_warning("You may need to run 'bash .claude/rules/build.sh' manually")
+                ui.print_warning("You may need to run 'python3 .claude/rules/build.py' manually")
         else:
-            ui.print_warning("build.sh not found, skipping")
+            ui.print_warning("build.py not found, skipping")
         print("")
 
-        # Install Statusline Configuration
         ui.print_section("Installing Statusline Configuration")
         source_config = project_dir / ".claude" / "statusline.json"
         target_dir = Path.home() / ".config" / "ccstatusline"
@@ -442,11 +457,9 @@ def main() -> None:
             ui.print_warning("statusline.json not found in .claude directory, skipping")
         print("")
 
-        # Configure Shell
         ui.print_section("Configuring Shell")
         shell_config.add_cc_alias(project_dir)
 
-        # Success Message
         ui.print_section("🎉 Installation Complete!")
 
         print("")
@@ -489,7 +502,6 @@ def main() -> None:
         print("")
 
     finally:
-        # Cleanup
         utils.cleanup(temp_dir)
 
 

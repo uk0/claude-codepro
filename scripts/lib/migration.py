@@ -26,16 +26,14 @@ def needs_migration(project_dir: Path) -> bool:
     """
     config_file = project_dir / ".claude" / "rules" / "config.yaml"
 
-    # If config.yaml doesn't exist, no migration needed
     if not config_file.exists():
         return False
 
-    # Check if config.yaml has new format (standard: or custom:)
     content = config_file.read_text()
     if "standard:" in content or "custom:" in content:
-        return False  # Already migrated
+        return False
 
-    return True  # Migration needed
+    return True
 
 
 def run_migration(project_dir: Path, non_interactive: bool = False) -> None:
@@ -64,9 +62,7 @@ def run_migration(project_dir: Path, non_interactive: bool = False) -> None:
     print("  3. Fresh rules will be downloaded")
     print("")
 
-    # Interactive prompt
     if not non_interactive:
-        # Check if stdin is a terminal
         if sys.stdin.isatty():
             reply = input("Continue with migration? (Y/n): ").strip()
         else:
@@ -76,7 +72,6 @@ def run_migration(project_dir: Path, non_interactive: bool = False) -> None:
 
     print("")
 
-    # Default to Y
     if not reply:
         reply = "Y"
 
@@ -89,14 +84,12 @@ def run_migration(project_dir: Path, non_interactive: bool = False) -> None:
         print("  3. Re-run installation")
         sys.exit(1)
 
-    # Create backup
     timestamp = int(time.time())
     backup_dir = project_dir / ".claude" / f"rules.backup.{timestamp}"
     ui.print_status(f"Creating backup at {backup_dir.name}...")
     shutil.copytree(rules_dir, backup_dir)
     ui.print_success(f"Backup created at: {backup_dir}")
 
-    # Delete old rules folder
     ui.print_status("Removing old rules folder...")
     shutil.rmtree(rules_dir)
     ui.print_success("Old rules removed")

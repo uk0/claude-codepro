@@ -149,7 +149,7 @@ Before writing a test, ask:
 
 ## Integration with TDD
 
-When following TDD (see tdd-enforcement.md):
+When following TDD:
 1. Write minimal failing test for critical path only
 2. Implement feature
 3. Verify test passes

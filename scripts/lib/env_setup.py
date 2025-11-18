@@ -36,11 +36,9 @@ def key_is_set(key: str, env_file: Path) -> bool:
     Returns:
         True if key is set in environment or .env file
     """
-    # Check if set as environment variable
     if os.environ.get(key):
         return True
 
-    # Check if exists in .env file
     return key_exists(key, env_file)
 
 
@@ -64,9 +62,7 @@ def add_env_key(key: str, value: str, comment: str, env_file: Path) -> None:
         f.write(f"{key}={value}\n")
 
 
-def prompt_api_key(
-    title: str, key: str, description: str, url: str, steps: list[str] | None = None
-) -> None:
+def prompt_api_key(title: str, key: str, description: str, url: str, steps: list[str] | None = None) -> None:
     """
     Display API key prompt with instructions.
 
@@ -138,7 +134,6 @@ def setup_env_file(project_dir: Path) -> None:
         print("Let's set up your API keys. I'll guide you through each one.")
         print("")
 
-    # Variables to store API keys
     milvus_token = ""
     milvus_address = ""
     vector_store_username = ""
@@ -146,7 +141,6 @@ def setup_env_file(project_dir: Path) -> None:
     openai_api_key = ""
     ref_api_key = ""
 
-    # Zilliz Cloud (Milvus)
     if not append_mode or not key_is_set("MILVUS_TOKEN", env_file):
         prompt_api_key(
             "1. Zilliz Cloud - Free Vector DB for Semantic Search & Memory",
@@ -163,18 +157,12 @@ def setup_env_file(project_dir: Path) -> None:
             ],
         )
 
-        # Check if stdin is a terminal
         if sys.stdin.isatty():
             milvus_token = input("   Enter MILVUS_TOKEN: ").strip()
-            milvus_address = input(
-                "   Enter MILVUS_ADDRESS (Public Endpoint): "
-            ).strip()
-            vector_store_username = input(
-                "   Enter VECTOR_STORE_USERNAME (usually db_xxxxx): "
-            ).strip()
+            milvus_address = input("   Enter MILVUS_ADDRESS (Public Endpoint): ").strip()
+            vector_store_username = input("   Enter VECTOR_STORE_USERNAME (usually db_xxxxx): ").strip()
             vector_store_password = input("   Enter VECTOR_STORE_PASSWORD: ").strip()
         else:
-            # Non-interactive mode
             milvus_token = os.environ.get("MILVUS_TOKEN", "")
             milvus_address = os.environ.get("MILVUS_ADDRESS", "")
             vector_store_username = os.environ.get("VECTOR_STORE_USERNAME", "")
@@ -182,12 +170,9 @@ def setup_env_file(project_dir: Path) -> None:
 
         print("")
     else:
-        ui.print_success(
-            "Zilliz Cloud configuration already set (found in environment or .env file), skipping"
-        )
+        ui.print_success("Zilliz Cloud configuration already set (found in environment or .env file), skipping")
         print("")
 
-    # OpenAI and Ref
     for key in ["OPENAI_API_KEY", "REF_API_KEY"]:
         if not append_mode or not key_is_set(key, env_file):
             title, description, url = get_api_config(key)
@@ -205,14 +190,10 @@ def setup_env_file(project_dir: Path) -> None:
 
             print("")
         else:
-            ui.print_success(
-                f"{key} already set (found in environment or .env file), skipping"
-            )
+            ui.print_success(f"{key} already set (found in environment or .env file), skipping")
             print("")
 
-    # Create or append to .env file
     if append_mode:
-        # Append mode: add missing keys
         content = env_file.read_text()
         if "# Claude CodePro Configuration" not in content:
             with open(env_file, "a") as f:
@@ -249,29 +230,28 @@ def setup_env_file(project_dir: Path) -> None:
 
         ui.print_success("Updated .env file with Claude CodePro configuration")
     else:
-        # Create new file
         env_content = f"""# Zilliz Cloud (Free Vector DB for Semantic Search & Persistent Memory)
-# Create at https://zilliz.com/cloud
-MILVUS_TOKEN={milvus_token}
-MILVUS_ADDRESS={milvus_address}
-VECTOR_STORE_URL={milvus_address}
-VECTOR_STORE_USERNAME={vector_store_username}
-VECTOR_STORE_PASSWORD={vector_store_password}
+                        # Create at https://zilliz.com/cloud
+                        MILVUS_TOKEN={milvus_token}
+                        MILVUS_ADDRESS={milvus_address}
+                        VECTOR_STORE_URL={milvus_address}
+                        VECTOR_STORE_USERNAME={vector_store_username}
+                        VECTOR_STORE_PASSWORD={vector_store_password}
 
-# OpenAI API Key - Used for Persistent Memory LLM Calls (Low Usage)
-# Create at https://platform.openai.com/account/api-keys
-OPENAI_API_KEY={openai_api_key}
+                        # OpenAI API Key - Used for Persistent Memory LLM Calls (Low Usage)
+                        # Create at https://platform.openai.com/account/api-keys
+                        OPENAI_API_KEY={openai_api_key}
 
-# Ref API Key - Free Tier Available, You can add your own Resources in the UI
-# Unified solution for documentation search, web scraping, code snippets, and library docs
-# Create at https://ref.tools/dashboard
-REF_API_KEY={ref_api_key}
+                        # Ref API Key - Free Tier Available, You can add your own Resources in the UI
+                        # Unified solution for documentation search, web scraping, code snippets, and library docs
+                        # Create at https://ref.tools/dashboard
+                        REF_API_KEY={ref_api_key}
 
-# Configuration Settings - No need to adjust
-USE_ASK_CIPHER=true
-VECTOR_STORE_TYPE=milvus
-FASTMCP_LOG_LEVEL=ERROR
-"""
+                        # Configuration Settings - No need to adjust
+                        USE_ASK_CIPHER=true
+                        VECTOR_STORE_TYPE=milvus
+                        FASTMCP_LOG_LEVEL=ERROR
+                        """
         env_file.write_text(env_content)
 
         ui.print_success("Created .env file with your API keys")

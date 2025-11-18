@@ -72,11 +72,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PROJECT_DIR}}/.claude/hooks/file_checker_qlty.sh"
+            "command": "python3 {{PROJECT_DIR}}/.claude/hooks/file_checker_qlty.py"
           },
           {
             "type": "command",
-            "command": "{{PROJECT_DIR}}/.claude/hooks/file_checker_python.sh"
+            "command": "python3 {{PROJECT_DIR}}/.claude/hooks/file_checker_python.py"
           }
         ]
       }

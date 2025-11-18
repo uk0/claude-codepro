@@ -41,15 +41,15 @@ echo "Starting Claude CodePro installation..."
 echo ""
 
 # Check if install script exists
-if [[ ! -f "scripts/install.sh" ]]; then
-    echo "ERROR: scripts/install.sh not found"
+if [[ ! -f "scripts/install.py" ]]; then
+    echo "ERROR: scripts/install.py not found"
     echo "Please ensure the repository is properly cloned"
     exit 1
 fi
 
 # Run installation in non-interactive mode
 # Skip environment setup initially (user can run manually later)
-bash scripts/install.sh
+python3 scripts/install.py --non-interactive --local
 
 echo ""
 echo "=================================================="

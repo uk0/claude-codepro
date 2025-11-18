@@ -96,26 +96,22 @@ def merge_mcp_config(
 
     temp_file = temp_dir / "mcp-temp.json"
 
-    # Download the new config
     if not downloads.download_file(repo_file, temp_file, config):
         ui.print_warning(f"Failed to download {repo_file}")
         return False
 
-    # If destination doesn't exist, just copy it
     if not dest_file.exists():
         _ = shutil.copy2(temp_file, dest_file)
         ui.print_success(f"Created {repo_file}")
         return True
 
     try:
-        # Load both configurations
         with open(dest_file, "r") as f:
             existing_config = json.load(f)
 
         with open(temp_file, "r") as f:
             new_config = json.load(f)
 
-        # Determine which key is used for servers (.mcpServers or .servers)
         server_key = None
         if "mcpServers" in existing_config:
             server_key = "mcpServers"
@@ -127,24 +123,19 @@ def merge_mcp_config(
             server_key = "servers"
 
         if server_key:
-            # Get existing and new servers
             existing_servers = existing_config.get(server_key, {})
             new_servers = new_config.get(server_key, {})
 
-            # Merge: new servers first, then existing (existing takes precedence)
             merged_servers = {**new_servers, **existing_servers}
 
-            # Merge the full config
             merged_config = {**new_config, **existing_config}
             merged_config[server_key] = merged_servers
         else:
-            # No servers key found, just merge dicts
             merged_config = {**new_config, **existing_config}
 
-        # Write merged config
         with open(dest_file, "w") as f:
             json.dump(merged_config, f, indent=2)
-            _ = f.write("\n")  # Add trailing newline
+            _ = f.write("\n")
 
         ui.print_success("Merged MCP servers (preserved existing configuration)")
         return True
@@ -172,17 +163,14 @@ def merge_yaml_config(
         True on success, False on failure
     """
     try:
-        # Try to import YAML library (install if needed)
         try:
-            import yaml  # type: ignore[import-untyped,import-not-found]
+            import yaml  # type: ignore[import-untyped]
         except ImportError:
-            # Install PyYAML
             ui.print_status("Installing PyYAML...")
             import subprocess
             import sys
 
             try:
-                # Check if we're in a uv environment
                 uv_available = (
                     subprocess.run(
                         ["uv", "--version"],
@@ -193,7 +181,6 @@ def merge_yaml_config(
                 )
 
                 if uv_available:
-                    # Use uv pip for uv-managed environments
                     result = subprocess.run(
                         ["uv", "pip", "install", "pyyaml"],
                         capture_output=True,
@@ -201,7 +188,6 @@ def merge_yaml_config(
                         check=False,
                     )
                 else:
-                    # Try regular pip install
                     result = subprocess.run(
                         [sys.executable, "-m", "pip", "install", "pyyaml"],
                         capture_output=True,
@@ -210,7 +196,6 @@ def merge_yaml_config(
                     )
 
                     if result.returncode != 0:
-                        # If pip fails, try with --user flag
                         result = subprocess.run(
                             [sys.executable, "-m", "pip", "install", "--user", "pyyaml"],
                             capture_output=True,
@@ -220,13 +205,12 @@ def merge_yaml_config(
 
                 if result.returncode == 0:
                     ui.print_success("Installed PyYAML")
-                    # Try to import the freshly installed module
+
                     try:
                         import importlib
 
-                        yaml = importlib.import_module("yaml")  # type: ignore[import-untyped,import-not-found]
+                        yaml = importlib.import_module("yaml")
                     except ImportError:
-                        # If import still fails, fall back to copying
                         import shutil
 
                         shutil.copy2(new_config_path, existing_config_path)
@@ -235,9 +219,8 @@ def merge_yaml_config(
                         )
                         return True
                 else:
-                    # Show error details
                     error_msg = result.stderr.strip() if result.stderr else "Unknown error"
-                    # Last resort: copy without merging
+
                     import shutil
 
                     shutil.copy2(new_config_path, existing_config_path)
@@ -246,7 +229,6 @@ def merge_yaml_config(
                     )
                     return True
             except Exception as e:
-                # Last resort: copy without merging
                 import shutil
 
                 shutil.copy2(new_config_path, existing_config_path)
@@ -255,15 +237,12 @@ def merge_yaml_config(
                 )
                 return True
 
-        # Load both configs (Any types are expected from YAML parsing)
         with open(new_config_path, "r") as f:
-            new_config = yaml.safe_load(f)  # type: ignore[no-untyped-call]
+            new_config = yaml.safe_load(f)
 
         with open(existing_config_path, "r") as f:
-            existing_config = yaml.safe_load(f)  # type: ignore[no-untyped-call]
+            existing_config = yaml.safe_load(f)
 
-        # Merge strategy: Take new config, replace custom arrays with old custom arrays
-        # This preserves user's custom rules while updating standard rules
         if "commands" in new_config and "commands" in existing_config:
             for cmd_name, cmd_config in new_config["commands"].items():
                 if cmd_name in existing_config["commands"]:
@@ -272,7 +251,6 @@ def merge_yaml_config(
                         cmd_config["rules"] = {}
                     cmd_config["rules"]["custom"] = old_custom
 
-        # Write merged config
         with open(existing_config_path, "w") as f:
             yaml.dump(new_config, f, default_flow_style=False, sort_keys=False)
 

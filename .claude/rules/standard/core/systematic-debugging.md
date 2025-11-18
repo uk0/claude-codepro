@@ -124,7 +124,7 @@ Complete each phase sequentially. Do not skip ahead.
    - Write simplest possible reproduction
    - Use automated test if possible, otherwise one-off test script
    - MUST create test before implementing fix
-   - Follow TDD principles (see tdd-enforcement.md)
+   - Follow TDD principles
 
 2. **Implement Single Fix**
    - Address only the root cause identified

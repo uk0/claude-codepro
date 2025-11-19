@@ -181,17 +181,35 @@ def install_qlty(project_dir: Path) -> None:
         os.environ["QLTY_INSTALL"] = str(qlty_install)
         os.environ["PATH"] = f"{qlty_bin}:{os.environ.get('PATH', '')}"
 
-        # Add to zshrc
-        zshrc = Path.home() / ".zshrc"
-        if zshrc.exists():
-            marker = "# qlty configuration"
-            if marker not in zshrc.read_text():
-                zsh_config = (
-                    f'\n{marker}\nexport QLTY_INSTALL="{qlty_install}"\nexport PATH="$QLTY_INSTALL/bin:$PATH"\n'
-                )
-                with open(zshrc, "a") as f:
-                    f.write(zsh_config)
-                ui.print_success("Added qlty to .zshrc")
+        # Configuration to add to shell profiles
+        marker = "# qlty configuration"
+        config_lines = [
+            "",
+            marker,
+            f'export QLTY_INSTALL="{qlty_install}"',
+            'export PATH="$QLTY_INSTALL/bin:$PATH"',
+            "",
+        ]
+        config_text = "\n".join(config_lines)
+
+        # Add to shell profiles (both zsh and bash for compatibility)
+        for shell_rc in [".zshrc", ".bashrc"]:
+            rc_file = Path.home() / shell_rc
+
+            # Create file if it doesn't exist
+            if not rc_file.exists():
+                rc_file.touch()
+                ui.print_status(f"Created {shell_rc}")
+
+            rc_content = rc_file.read_text()
+
+            # Add configuration if marker not present
+            if marker not in rc_content:
+                with open(rc_file, "a") as f:
+                    f.write(config_text)
+                ui.print_success(f"Added qlty to {shell_rc}")
+            else:
+                ui.print_status(f"qlty already configured in {shell_rc}")
 
         qlty_cmd = qlty_bin / "qlty"
         if qlty_cmd.exists():
@@ -203,6 +221,7 @@ def install_qlty(project_dir: Path) -> None:
             )
 
         ui.print_success("Installed qlty")
+        ui.print_warning("Note: Restart your shell or run 'source ~/.zshrc' to use qlty in new terminals")
 
     except subprocess.CalledProcessError as e:
         ui.print_warning(f"qlty installation failed: {e}")

@@ -115,3 +115,4 @@ typeCheckingMode = "standard"
 reportUnknownMemberType = false
 reportGeneralTypeIssues = true
 reportOptionalMemberAccess = true
+reportImplicitRelativeImport = false

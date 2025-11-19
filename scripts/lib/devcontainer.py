@@ -158,7 +158,7 @@ def offer_devcontainer_setup(
     print("The .devcontainer configuration has been installed.")
     print("")
     print("To use it:")
-    print("  1. Install the 'Dev Containers' extension in VS Code/Cursor/Windsurf")
+    print("  1. Install the 'Dev Containers' extension in VS Code/Cursor/Windsurf/Antigravity")
     print("     Extension ID: ms-vscode-remote.remote-containers")
     print("")
     print("  2. Open Command Palette (Cmd+Shift+P / Ctrl+Shift+P)")

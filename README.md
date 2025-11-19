@@ -77,7 +77,7 @@ The installer will guide you through the setup process with interactive prompts.
 - **Automated Setup Script** - Installs and configures everything in one command
 - **Global Tools** - Python tools, qlty, Claude Code, Cipher, Newman installed globally
 - **Shell Integration** - Auto-configures bash and zsh with `ccp` alias
-- **IDE Compatible** - Works with VS Code, Cursor, Windsurf, or any terminal
+- **IDE Compatible** - Works with VS Code, Cursor, Windsurf or Antigravity
 
 ---
 
@@ -196,4 +196,3 @@ Contributions welcome: custom skills, MCP integrations, workflow improvements, b
 Made with ❤️ by [Max Ritter](https://www.maxritter.net) and [Manuel Vogel](https://manuel-vogel.de)
 
 [🌐 claude-code.pro](https://www.claude-code.pro)
-

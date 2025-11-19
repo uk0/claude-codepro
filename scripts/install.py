@@ -225,6 +225,10 @@ def install_claude_files(project_dir: Path, config, install_python: str, temp_di
         if not file_path:
             continue
 
+        # Skip auto-generated directories (built by build.py)
+        if ".claude/commands/" in file_path or ".claude/skills/" in file_path:
+            continue
+
         if "rules/custom/" in file_path:
             continue
 
@@ -330,6 +334,7 @@ def main() -> None:
         else:
             print("Do you want to install advanced Python features?")
             print("This includes: uv, ruff, mypy, basedpyright, and Python quality hooks")
+            sys.stdout.flush()  # Ensure prompt is displayed before reading input
             install_python = input("Install Python support? (Y/n): ").strip() or "Y"
             print("")
             print("")

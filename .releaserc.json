@@ -24,13 +24,13 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i 's/^VERSION = \".*\"/VERSION = \"v${nextRelease.version}\"/' scripts/install.py"
+        "prepareCmd": "sed -i 's/^__version__ = \".*\"/__version__ = \"${nextRelease.version}\"/' installer/__init__.py"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["scripts/install.py"],
+        "assets": ["installer/__init__.py"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],

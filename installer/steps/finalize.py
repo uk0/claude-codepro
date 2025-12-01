@@ -1,0 +1,136 @@
+"""Finalize step - runs final cleanup tasks and displays success."""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from installer.steps.base import BaseStep
+
+if TYPE_CHECKING:
+    from installer.context import InstallContext
+
+
+class FinalizeStep(BaseStep):
+    """Step that runs final cleanup tasks and displays success panel."""
+
+    name = "finalize"
+
+    def check(self, ctx: InstallContext) -> bool:
+        """Always returns False - finalize always runs."""
+        return False
+
+    def run(self, ctx: InstallContext) -> None:
+        """Run final cleanup tasks and display success."""
+        # Build rules
+        self._build_rules(ctx)
+
+        # Install statusline config
+        self._install_statusline_config(ctx)
+
+        # Display success panel
+        self._display_success(ctx)
+
+    def _build_rules(self, ctx: InstallContext) -> None:
+        """Build rules using build.py script."""
+        build_script = ctx.project_dir / ".claude" / "rules" / "build.py"
+        ui = ctx.ui
+
+        if not build_script.exists():
+            if ui:
+                ui.warning("build.py not found, skipping rules build")
+            return
+
+        if ui:
+            ui.section("Building Rules")
+            ui.status("Running rules build script...")
+
+        try:
+            subprocess.run(
+                [sys.executable, str(build_script)],
+                check=True,
+                capture_output=True,
+                cwd=ctx.project_dir,
+            )
+            if ui:
+                ui.success("Rules built successfully")
+        except subprocess.CalledProcessError:
+            if ui:
+                ui.error("Failed to build rules")
+                ui.warning("You may need to run 'python3 .claude/rules/build.py' manually")
+
+    def _install_statusline_config(self, ctx: InstallContext) -> None:
+        """Install statusline configuration to user config directory."""
+        ui = ctx.ui
+        source_config = ctx.project_dir / ".claude" / "statusline.json"
+
+        if not source_config.exists():
+            if ui:
+                ui.warning("statusline.json not found, skipping")
+            return
+
+        if ui:
+            ui.status("Installing statusline configuration...")
+
+        target_dir = Path.home() / ".config" / "ccstatusline"
+        target_config = target_dir / "settings.json"
+
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_config, target_config)
+            if ui:
+                ui.success("Installed statusline configuration")
+        except (OSError, IOError) as e:
+            if ui:
+                ui.warning(f"Failed to install statusline config: {e}")
+
+    def _display_success(self, ctx: InstallContext) -> None:
+        """Display success panel with next steps."""
+        ui = ctx.ui
+
+        if not ui:
+            return
+
+        # Show summary of what was installed
+        installed_items = []
+        if ctx.config.get("installed_dependencies"):
+            for dep in ctx.config["installed_dependencies"]:
+                installed_items.append(dep.replace("_", " ").title())
+
+        installed_items.extend(
+            [
+                "Claude CodePro rules",
+                "Shell alias (ccp)",
+                "MCP configuration",
+            ]
+        )
+
+        if ctx.install_python:
+            installed_items.append("Python development tools")
+
+        ui.success_box("Installation Complete!", installed_items)
+
+        # Show next steps using the enhanced UI
+        ui.next_steps(
+            [
+                ("Reload your shell", "source ~/.zshrc (or ~/.bashrc)"),
+                ("Start Claude Code", "Run: ccp"),
+                ("Configure settings", "In Claude Code: /config → Auto-connect IDE = true"),
+                ("Verify MCP servers", "Run: /mcp → All servers should be online"),
+                ("Initialize project", "Run: /setup → Scans and indexes codebase"),
+                ("Start building!", "/plan → /implement → /verify"),
+            ]
+        )
+
+        ui.rule()
+        ui.print()
+        ui.print("  [bold cyan]📚 Learn more:[/bold cyan] https://www.claude-code.pro")
+        ui.print("  [bold cyan]💬 Questions?[/bold cyan]  https://github.com/maxritter/claude-codepro/issues")
+        ui.print()
+
+    def rollback(self, ctx: InstallContext) -> None:
+        """Finalize has no rollback (informational only)."""
+        pass

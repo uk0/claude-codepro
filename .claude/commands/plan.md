@@ -79,6 +79,73 @@ Options:
 8. Add extension history: `> Extended [Date]: Tasks X-Y for [feature]`
 
 
+## ⚠️ CRITICAL: Migration/Refactoring Tasks
+
+**When the task involves migrating, refactoring, or replacing existing code, you MUST complete these additional steps to prevent missing features.**
+
+### Mandatory Feature Inventory (Phase 1.5)
+
+**After exploration but BEFORE creating tasks:**
+
+1. **List ALL files being replaced:**
+   ```markdown
+   ## Feature Inventory - Files Being Replaced
+
+   | Old File | Functions/Classes | Status |
+   |----------|-------------------|--------|
+   | `old/module1.py` | `func_a()`, `func_b()`, `ClassX` | ⬜ Not mapped |
+   | `old/module2.py` | `func_c()`, `func_d()` | ⬜ Not mapped |
+   ```
+
+2. **Map EVERY function/feature to a new task:**
+   ```markdown
+   ## Feature Mapping - Old → New
+
+   | Old Feature | New Location | Task # |
+   |-------------|--------------|--------|
+   | `module1.func_a()` | `new/step1.py` | Task 3 |
+   | `module1.func_b()` | `new/step1.py` | Task 3 |
+   | `module2.func_c()` | `new/step2.py` | Task 5 |
+   | `module2.func_d()` | ❌ MISSING | ⚠️ NEEDS TASK |
+   ```
+
+3. **Verify 100% coverage before proceeding:**
+   - Every row must have a Task # or explicit "Out of Scope" justification
+   - "Out of Scope" means the feature is INTENTIONALLY REMOVED (with user confirmation)
+   - "Out of Scope" does NOT mean "migrate as-is" - that still needs a task!
+
+### "Out of Scope" Clarification
+
+**CRITICAL: "Out of Scope" has a precise meaning:**
+
+| Phrase | Meaning | Requires Task? |
+|--------|---------|----------------|
+| "Out of Scope: Changes to X" | X will be migrated AS-IS, no modifications | ✅ YES - migration task |
+| "Out of Scope: Feature X" | X is intentionally REMOVED/not included | ❌ NO - but needs user confirmation |
+| "Out of Scope: New features for X" | X migrates as-is, no NEW features added | ✅ YES - migration task |
+
+**When in doubt, ASK THE USER:**
+```
+"The old code has [feature]. Should we:
+A) Migrate it as-is (needs implementation task)
+B) Intentionally remove it (truly out of scope)
+C) Improve it (new feature, needs implementation task)"
+```
+
+### Pre-Task Verification Gate
+
+**Before finalizing Phase 3 (Implementation Planning), verify:**
+
+- [ ] All old files listed in Feature Inventory
+- [ ] All functions/classes from old files identified
+- [ ] Every feature mapped to a task OR explicitly marked "REMOVED" with user confirmation
+- [ ] No row in Feature Mapping has "⬜ Not mapped" status
+- [ ] User has confirmed any features marked for removal
+
+**If any checkbox is unchecked, DO NOT proceed to Phase 4.**
+
+---
+
 ## Creating New Plans
 
 ### Phase 0: Task Understanding & Clarification
@@ -257,6 +324,26 @@ Status: PENDING
 - [Domain knowledge needed]
 - [Integration points or dependencies]
 
+## Feature Inventory (FOR MIGRATION/REFACTORING ONLY)
+
+> **Include this section when replacing existing code. Delete if not applicable.**
+
+### Files Being Replaced
+
+| Old File | Functions/Classes | Mapped to Task |
+|----------|-------------------|----------------|
+| `old/file1.py` | `func_a()`, `func_b()` | Task 3 |
+| `old/file2.py` | `ClassX`, `func_c()` | Task 4, Task 5 |
+
+### Feature Mapping Verification
+
+- [ ] All old files listed above
+- [ ] All functions/classes identified
+- [ ] Every feature has a task number
+- [ ] No features accidentally omitted
+
+**⚠️ If any feature shows "❌ MISSING", add a task before implementation!**
+
 ## Progress Tracking
 
 **MANDATORY: Update this checklist as tasks complete. Change `[ ]` to `[x]`.**
@@ -326,3 +413,5 @@ These rules are non-negotiable:
 7. **ALWAYS re-read the plan after user confirms** - They may have edited it
 8. **The plan must be detailed enough that another developer could follow it**
 9. **NEVER use built-in ExitPlanMode or EnterPlanMode tools** - This project uses custom `/plan`, `/implement`, `/verify` slash commands. The built-in plan mode tools are incompatible with this workflow.
+10. **FOR MIGRATIONS: Create Feature Inventory BEFORE tasks** - List every file, function, and class being replaced. Map each to a task. No unmapped features allowed.
+11. **"Out of Scope" ≠ "Don't implement"** - "Out of Scope: Changes to X" means migrate X as-is (still needs a task). Only "Out of Scope: Remove X" means no task needed (requires user confirmation).

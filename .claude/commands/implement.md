@@ -6,6 +6,27 @@ model: opus
 
 **Execute ALL tasks continuously. NO stopping unless context manager says context is full.**
 
+## ⛔ CRITICAL: Task Completion Tracking is MANDATORY
+
+**After completing EACH task, you MUST:**
+
+1. **IMMEDIATELY edit the plan file** to change `[ ]` to `[x]` for that task
+2. **Update the Progress Tracking counts** (Completed/Remaining)
+3. **DO NOT proceed to next task** until the checkbox is updated
+
+**This is NON-NEGOTIABLE. If you skip this step:**
+- The rules supervisor will detect incomplete task tracking
+- Verification will fail
+- You will need to re-implement
+
+**Example - After completing Task 5:**
+```
+Edit the plan file:
+- [ ] Task 5: Implement X  →  - [x] Task 5: Implement X
+Update counts:
+**Completed:** 4 | **Remaining:** 8  →  **Completed:** 5 | **Remaining:** 7
+```
+
 ## CRITICAL: No Sub-Agents During Implementation
 
 **NEVER use the Task tool or spawn sub-agents during implementation.** Sub-agents slow down execution and waste context. Instead:
@@ -41,6 +62,48 @@ model: opus
    - Claude Context: Related patterns and components
    - Exa: External documentation if needed
 
+## ⚠️ CRITICAL: Migration/Refactoring Tasks
+
+**When the plan involves replacing existing code, perform these ADDITIONAL checks:**
+
+### Before Starting Implementation
+
+1. **Locate the Feature Inventory section** in the plan
+2. **If Feature Inventory is MISSING** - STOP and inform user:
+   ```
+   "This migration plan is missing a Feature Inventory section.
+   Without it, features may be accidentally omitted.
+   Please run `/plan` again to add the inventory, or manually add it to the plan."
+   ```
+3. **Verify ALL features are mapped** - Every row must have a Task #
+4. **Read the OLD code completely** - Don't rely on the plan alone
+
+### During Implementation
+
+For EACH task that migrates old functionality:
+
+1. **Read the corresponding old file(s)** listed in Feature Inventory
+2. **Create a checklist** of functions/behaviors from old code
+3. **Verify each function/behavior exists** in new code after implementation
+4. **Test with same inputs** - Old and new code should produce same outputs
+
+### Before Marking Task Complete
+
+**For migration tasks, add this to Definition of Done:**
+
+- [ ] All functions from old code have equivalents in new code
+- [ ] Behavior matches old code (same inputs → same outputs)
+- [ ] No features accidentally omitted
+
+### Red Flags - STOP Implementation
+
+If you notice ANY of these, STOP and report to user:
+
+- Feature Inventory section missing from plan
+- Old file has functions not mentioned in any task
+- "Out of Scope" items that should actually be migrated
+- Tests pass but functionality is missing compared to old code
+
 ## TDD is MANDATORY
 
 **No production code without a failing test first.** Follow the TDD rules in your context.
@@ -74,7 +137,20 @@ model: opus
 8. **Check diagnostics again** - Must be zero errors
 9. **Validate Definition of Done** - Check all criteria from plan
 10. **Mark task completed** in TodoWrite
-11. **Update plan's Progress Tracking** - Change `[ ]` to `[x]`, update Completed/Remaining counts
+
+### ⛔ STEP 11 IS MANDATORY - DO NOT SKIP
+
+11. **UPDATE PLAN FILE IMMEDIATELY:**
+    ```
+    Use Edit tool to change in the plan file:
+    - [ ] Task N: ...  →  - [x] Task N: ...
+
+    Also update Progress Tracking section:
+    **Completed:** X | **Remaining:** Y
+    ```
+    **You MUST do this BEFORE proceeding to the next task.**
+    **Failure to update = incomplete implementation.**
+
 12. **Check context usage**
 
 ## Critical Task Rules
@@ -99,12 +175,29 @@ Before marking complete:
 **⚠️ CRITICAL: Follow these steps exactly:**
 
 1. Quick verification: `mcp__ide__getDiagnostics()` and `uv run pytest`
-2. Store learnings in Cipher
-3. **MANDATORY: Update plan status to COMPLETE**
+2. **FOR MIGRATIONS ONLY - Feature Parity Check:**
+   - Run the NEW code and verify it produces expected output
+   - Compare behavior with OLD code (if still available)
+   - Check Feature Inventory - every feature should now be implemented
+   - If ANY feature is missing: **DO NOT mark complete** - add tasks for missing features
+3. Store learnings in Cipher
+4. **MANDATORY: Update plan status to COMPLETE**
    ```
    Edit the plan file and change the Status line:
    Status: PENDING  →  Status: COMPLETE
    ```
    This triggers the Rules Supervisor on your next response.
-4. Inform user: "✅ All tasks complete. Run `/verify`"
-5. DO NOT run /verify yourself
+5. Inform user: "✅ All tasks complete. Run `/verify`"
+6. DO NOT run /verify yourself
+
+### Migration Completion Checklist
+
+**For migration/refactoring tasks, verify before marking COMPLETE:**
+
+- [ ] All tests pass
+- [ ] New code runs without errors
+- [ ] Feature Inventory shows all features mapped to completed tasks
+- [ ] Old code functionality is replicated in new code
+- [ ] "Out of Scope" items were intentional removals (user confirmed), not forgotten migrations
+
+**If you cannot check ALL boxes, the migration is INCOMPLETE. Add new tasks.**

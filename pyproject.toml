@@ -4,7 +4,15 @@ version = "1.0.0"
 description = "Claude CodePro"
 requires-python = ">=3.13,<3.14"
 readme = "README.md"
-dependencies = []
+dependencies = [
+    "rich>=14.0.0",
+    "InquirerPy>=0.3.4",
+    "httpx>=0.28.1",
+    "typer>=0.15.3",
+    "platformdirs>=4.3.6",
+    "pyinstaller>=6.17.0",
+    "nuitka>=2.8.9",
+]
 
 [dependency-groups]
 dev = [
@@ -21,7 +29,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["scripts"]
+pythonpath = ["scripts", "installer", "."]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
@@ -97,7 +105,7 @@ paths = ["scripts"]
 ignore_missing_imports = true
 
 [tool.basedpyright]
-include = ["scripts"]
+include = ["scripts", "installer"]
 exclude = [
     "**/node_modules",
     "**/__pycache__",

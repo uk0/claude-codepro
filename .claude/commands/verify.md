@@ -30,11 +30,63 @@ Run the actual program and verify real output.
 
 **If serious bugs (NOT simple fixes):**
 1. Store findings in Cipher
-2. Update plan with bug fixes
-3. Tell user: "Found [N] bugs. Run `/clear` → `/implement [plan]`"
-4. STOP
+2. Update plan with bug fixes as new tasks
+3. Set plan status to `PENDING`
+4. Tell user: "Found [N] bugs. Run `/clear` → `/implement [plan]`"
+5. STOP
 
 **If simple fixes:** Fix directly, re-run, continue
+
+### Step 3a: Feature Parity Check (if applicable)
+
+**For refactoring/migration tasks:** Verify ALL original functionality is preserved.
+
+**Process:**
+1. Compare old implementation with new implementation
+2. Create checklist of features from old code
+3. Verify each feature exists in new code
+4. Run new code and verify same behavior as old code
+
+**If features are MISSING:**
+
+This is a serious issue - the implementation is incomplete.
+
+1. **Store findings in Cipher:**
+   ```
+   mcp__cipher__ask_cipher("Store: VERIFICATION FAILED - Missing features: [list]")
+   ```
+
+2. **Add new tasks to the plan file:**
+   - Read the existing plan
+   - Add new tasks for each missing feature (follow existing task format)
+   - Mark new tasks with `[MISSING]` prefix in task title
+   - Update the Progress Tracking section with new task count
+   - Add note: `> Extended [Date]: Tasks X-Y added for missing features found during verification`
+
+3. **Set plan status to PENDING:**
+   ```
+   Edit the plan file and change the Status line:
+   Status: COMPLETE  →  Status: PENDING
+   ```
+
+4. **Inform user:**
+   ```
+   ⚠️ VERIFICATION FAILED - Missing Features Detected
+
+   Found [N] missing features that need implementation:
+   - [Feature 1]
+   - [Feature 2]
+   - ...
+
+   The plan has been updated with [N] new tasks.
+
+   Next steps:
+   1. Run `/clear` to reset context
+   2. Run `/implement @docs/plans/[plan-file].md` to implement missing features
+   3. Run `/verify @docs/plans/[plan-file].md` again after implementation
+   ```
+
+5. **STOP** - Do not continue verification
 
 ### Step 4: Call Chain Analysis
 
@@ -133,13 +185,26 @@ newman run postman/collections/api-tests.json \
 
 ### Step 10: Update Plan Status
 
-**When all verification passes:**
+**Status Lifecycle:** `PENDING` → `COMPLETE` → `VERIFIED`
+
+**When ALL verification passes (no missing features, no bugs):**
 
 1. **MANDATORY: Update plan status to VERIFIED**
    ```
    Edit the plan file and change the Status line:
-   Status: REVIEWED  →  Status: VERIFIED
+   Status: COMPLETE  →  Status: VERIFIED
    ```
 2. Inform user: "✅ Verification complete. Plan status updated to VERIFIED."
+
+**When verification FAILS (missing features or serious bugs):**
+
+1. Add new tasks to the plan for missing features/bugs
+2. **Set status back to PENDING:**
+   ```
+   Edit the plan file and change the Status line:
+   Status: COMPLETE  →  Status: PENDING
+   ```
+3. Inform user to run `/clear` → `/implement [plan]` → `/verify [plan]`
+4. STOP - do not continue
 
 **Fix immediately | Test after each fix | No "should work" - verify it works | Keep fixing until green**

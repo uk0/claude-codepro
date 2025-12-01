@@ -15,7 +15,6 @@ downloads/
 eggs/
 .eggs/
 lib/
-!scripts/lib/
 lib64/
 parts/
 sdist/
@@ -225,6 +224,7 @@ __marimo__/
 data/
 
 # Claude Code
+.claude.backup.*
 settings.local.json
 .claude/CLAUDE.md
 .claude/rules/custom/project.md
@@ -241,3 +241,4 @@ docs/plans
 
 # Kiro
 .kiro/
+.claude/.installer-version

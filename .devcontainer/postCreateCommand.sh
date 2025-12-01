@@ -82,8 +82,7 @@ echo "=================================================="
 echo ""
 
 # Download and run the latest installer
-curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/main/scripts/install.py -o /tmp/claude-codepro-install.py
-python3 /tmp/claude-codepro-install.py
+curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/main/install.sh | bash
 
 # Get project slug from workspace folder name (matches container name)
 PROJECT_SLUG=$(basename "$PWD")

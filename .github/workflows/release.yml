@@ -30,6 +30,89 @@ jobs:
           "$HOME/.qlty/bin/qlty" check --install-only
           "$HOME/.qlty/bin/qlty" check
 
+  build-installer-linux:
+    name: Build Installer Linux
+    runs-on: ubuntu-latest
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            artifact: ccp-installer-linux-x86_64
+          - arch: arm64
+            artifact: ccp-installer-linux-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU for ARM64
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build in Docker (GLIBC 2.31 compatible)
+        run: |
+          docker run --rm \
+            --platform linux/${{ matrix.arch }} \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ubuntu:20.04 \
+            bash -c "
+              apt-get update && \
+              apt-get install -y python3 python3-pip && \
+              python3 -m pip install --upgrade pip && \
+              python3 -m pip install pyinstaller rich && \
+              python3 -m pip install InquirerPy httpx typer platformdirs && \
+              cd installer && python3 build_cicd.py
+            "
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: installer/dist/${{ matrix.artifact }}
+          retention-days: 7
+
+  build-installer-macos:
+    name: Build Installer macOS ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            arch: x86_64
+            artifact: ccp-installer-darwin-x86_64
+          - os: macos-latest
+            arch: arm64
+            artifact: ccp-installer-darwin-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Build binary
+        working-directory: installer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller rich InquirerPy httpx
+          python -m pip install typer platformdirs
+          python build_cicd.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: installer/dist/${{ matrix.artifact }}
+          retention-days: 7
+
   build-premium-linux:
     name: Build Premium Linux
     runs-on: ubuntu-latest
@@ -178,7 +261,12 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    needs: [python-tests, build-premium-linux, build-premium-macos]
+    needs:
+      - python-tests
+      - build-premium-linux
+      - build-premium-macos
+      - build-installer-linux
+      - build-installer-macos
 
     steps:
       - name: Checkout
@@ -192,10 +280,12 @@ jobs:
         with:
           path: premium-binaries
 
-      - name: Prepare premium binaries
+      - name: Prepare release binaries
         run: |
           mkdir -p release-assets
           find premium-binaries -type f -name 'ccp-premium-*' \
+            -exec cp {} release-assets/ \;
+          find premium-binaries -type f -name 'ccp-installer-*' \
             -exec cp {} release-assets/ \;
           ls -la release-assets/
 
@@ -234,9 +324,8 @@ jobs:
             || echo "main")
 
           if [ -f README.md ]; then
-            PATTERN="maxritter/claude-codepro/[^/]*/scripts/install.py"
-            REPLACE="maxritter/claude-codepro/${LATEST_TAG}/scripts/"
-            REPLACE="${REPLACE}install.py"
+            PATTERN="maxritter/claude-codepro/[^/]*/install.sh"
+            REPLACE="maxritter/claude-codepro/${LATEST_TAG}/install.sh"
             sed -i "s|${PATTERN}|${REPLACE}|g" README.md
 
             if git diff --quiet README.md; then

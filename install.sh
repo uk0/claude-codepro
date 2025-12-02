@@ -49,6 +49,6 @@ else
     exit 1
 fi
 
-# Make executable and run
+# Make executable and run with 'install' command
 chmod +x "$INSTALL_PATH"
-exec "$INSTALL_PATH" "$@"
+exec "$INSTALL_PATH" install "$@"

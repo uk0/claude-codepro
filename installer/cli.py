@@ -19,7 +19,6 @@ from installer.steps.devcontainer import DevcontainerStep
 from installer.steps.environment import EnvironmentStep
 from installer.steps.finalize import FinalizeStep
 from installer.steps.git_setup import GitSetupStep
-from installer.steps.preflight import PreflightStep
 from installer.steps.premium import PremiumStep
 from installer.steps.shell_config import ShellConfigStep
 from installer.ui import Console
@@ -34,7 +33,6 @@ app = typer.Typer(
 def get_all_steps() -> list[BaseStep]:
     """Get all installation steps in order."""
     return [
-        PreflightStep(),
         DevcontainerStep(),
         BootstrapStep(),
         GitSetupStep(),

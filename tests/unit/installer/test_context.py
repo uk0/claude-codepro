@@ -35,26 +35,26 @@ class TestInstallContext:
         from installer.context import InstallContext
 
         ctx = InstallContext(project_dir=Path("/tmp/test"))
-        ctx.mark_completed("preflight")
-        assert "preflight" in ctx.completed_steps
+        ctx.mark_completed("bootstrap")
+        assert "bootstrap" in ctx.completed_steps
 
     def test_mark_completed_is_idempotent(self):
         """mark_completed doesn't add duplicates."""
         from installer.context import InstallContext
 
         ctx = InstallContext(project_dir=Path("/tmp/test"))
-        ctx.mark_completed("preflight")
-        ctx.mark_completed("preflight")
-        assert ctx.completed_steps.count("preflight") == 1
+        ctx.mark_completed("bootstrap")
+        ctx.mark_completed("bootstrap")
+        assert ctx.completed_steps.count("bootstrap") == 1
 
     def test_is_completed_returns_correct_value(self):
         """is_completed checks if step is done."""
         from installer.context import InstallContext
 
         ctx = InstallContext(project_dir=Path("/tmp/test"))
-        assert ctx.is_completed("preflight") is False
-        ctx.mark_completed("preflight")
-        assert ctx.is_completed("preflight") is True
+        assert ctx.is_completed("bootstrap") is False
+        ctx.mark_completed("bootstrap")
+        assert ctx.is_completed("bootstrap") is True
 
     def test_needs_rollback_when_steps_completed(self):
         """needs_rollback returns True when steps completed."""
@@ -62,7 +62,7 @@ class TestInstallContext:
 
         ctx = InstallContext(project_dir=Path("/tmp/test"))
         assert ctx.needs_rollback() is False
-        ctx.mark_completed("preflight")
+        ctx.mark_completed("bootstrap")
         assert ctx.needs_rollback() is True
 
 
@@ -81,12 +81,6 @@ class TestErrorHierarchy:
 
         assert issubclass(FatalInstallError, InstallError)
 
-    def test_preflight_error_is_fatal(self):
-        """PreflightError is a FatalInstallError."""
-        from installer.errors import FatalInstallError, PreflightError
-
-        assert issubclass(PreflightError, FatalInstallError)
-
     def test_config_error_is_install_error(self):
         """ConfigError inherits from InstallError."""
         from installer.errors import ConfigError, InstallError
@@ -99,16 +93,8 @@ class TestErrorHierarchy:
             ConfigError,
             FatalInstallError,
             InstallError,
-            PreflightError,
         )
 
-        for exc_class in [InstallError, FatalInstallError, PreflightError, ConfigError]:
+        for exc_class in [InstallError, FatalInstallError, ConfigError]:
             exc = exc_class("test message")
             assert str(exc) == "test message"
-
-    def test_preflight_error_has_check_name_attribute(self):
-        """PreflightError can have check_name attribute."""
-        from installer.errors import PreflightError
-
-        exc = PreflightError("Disk space check failed", check_name="disk_space")
-        assert exc.check_name == "disk_space"

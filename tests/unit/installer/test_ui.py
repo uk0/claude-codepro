@@ -94,7 +94,7 @@ class TestConsoleTable:
 
         console = Console()
         data = [
-            {"Step": "Preflight", "Status": "Complete"},
-            {"Step": "Bootstrap", "Status": "Pending"},
+            {"Step": "Bootstrap", "Status": "Complete"},
+            {"Step": "GitSetup", "Status": "Pending"},
         ]
         console.table(data, title="Installation Status")

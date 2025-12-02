@@ -34,9 +34,8 @@ class TestRunInstallation:
 
         assert callable(run_installation)
 
-    @patch("installer.cli.PreflightStep")
     @patch("installer.cli.BootstrapStep")
-    def test_run_installation_executes_steps(self, mock_bootstrap, mock_preflight):
+    def test_run_installation_executes_steps(self, mock_bootstrap):
         """run_installation executes steps in order."""
         from installer.cli import run_installation
         from installer.context import InstallContext
@@ -49,12 +48,6 @@ class TestRunInstallation:
                 non_interactive=True,
             )
 
-            # Mock step behavior
-            mock_preflight_instance = MagicMock()
-            mock_preflight_instance.name = "preflight"
-            mock_preflight_instance.check.return_value = False
-            mock_preflight.return_value = mock_preflight_instance
-
             mock_bootstrap_instance = MagicMock()
             mock_bootstrap_instance.name = "bootstrap"
             mock_bootstrap_instance.check.return_value = False
@@ -65,8 +58,8 @@ class TestRunInstallation:
             except Exception:
                 pass  # May fail due to other steps, that's ok
 
-            # Preflight should be called
-            mock_preflight_instance.run.assert_called()
+            # Bootstrap should be called
+            mock_bootstrap_instance.run.assert_called()
 
 
 class TestRollback:

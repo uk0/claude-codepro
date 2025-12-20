@@ -70,8 +70,8 @@ class TestBootstrapStep:
             # Should create .claude directory
             assert (Path(tmpdir) / ".claude").exists()
 
-    def test_bootstrap_creates_backup_on_upgrade(self):
-        """BootstrapStep creates backup when upgrading."""
+    def test_bootstrap_sets_upgrade_flag(self):
+        """BootstrapStep sets is_upgrade flag when upgrading."""
         from installer.context import InstallContext
         from installer.steps.bootstrap import BootstrapStep
         from installer.ui import Console
@@ -89,5 +89,7 @@ class TestBootstrapStep:
             )
             step.run(ctx)
 
-            # Should have created a backup
-            assert ctx.config.get("backup_path") is not None or (Path(tmpdir) / ".claude").exists()
+            # Should set is_upgrade flag and preserve existing content
+            assert ctx.config.get("is_upgrade") is True
+            assert (claude_dir / "test.txt").exists()
+            assert (claude_dir / "test.txt").read_text() == "existing content"

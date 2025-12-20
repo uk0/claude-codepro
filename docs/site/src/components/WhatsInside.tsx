@@ -3,7 +3,8 @@ import {
   FileCode2,
   Plug2,
   ShieldCheck,
-  Container
+  Container,
+  Sparkles
 } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
@@ -63,6 +64,16 @@ const insideItems: InsideItem[] = [
       "Pre-configured tools and extensions",
       "Global Python tools and qlty installed",
       "Shell integration with ccp alias",
+    ],
+  },
+  {
+    icon: Sparkles,
+    title: "Skills System",
+    items: [
+      "Reusable prompts in .claude/skills/",
+      "Backend and frontend standards skills",
+      "Testing guidelines and anti-patterns",
+      "Invoked automatically when relevant",
     ],
   },
 ];

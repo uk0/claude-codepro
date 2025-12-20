@@ -12,7 +12,7 @@ Start shipping systematically with Spec-Driven Development, Skills, TDD, Semanti
 ![Spec-Driven](https://img.shields.io/badge/Spec-Driven-orange.svg)
 ![TDD](https://img.shields.io/badge/TDD-Test--Driven--Development-green.svg)
 
-#### [⭐ Star this repo](https://github.com/maxritter/claude-codepro)
+#### [⭐ Star this repository ](https://github.com/maxritter/claude-codepro) - [🌐 Visit the website](https://claude-code.pro)
 
 </div>
 

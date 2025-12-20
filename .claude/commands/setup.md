@@ -10,6 +10,93 @@ model: opus
 
 ## Execution Sequence
 
+### Phase 0: Custom MCP Servers Configuration
+
+**Purpose:** Document any custom MCP servers the user has added beyond the standard ones (claude-context, tavily, Ref).
+
+1. **Ask user about custom MCP servers:**
+
+   Use AskUserQuestion:
+   ```
+   Question: "Do you have custom MCP servers to add to this project?"
+   Options:
+   - "Yes, let me add them now" - User will edit .mcp.json
+   - "No, skip this step" - Proceed without custom servers
+   ```
+
+2. **If user selects "Yes":**
+
+   Display instructions:
+   ```
+   Please add your custom MCP servers to .mcp.json now.
+
+   The file is located at: [project_dir]/.mcp.json
+
+   Example format:
+   {
+     "mcpServers": {
+       "your-server-name": {
+         "command": "npx",
+         "args": ["-y", "your-mcp-package"]
+       }
+     }
+   }
+
+   Note: claude-context, tavily, and Ref are already configured.
+   ```
+
+   Then ask for confirmation:
+   ```
+   Question: "Have you finished adding your MCP servers?"
+   Options:
+   - "Yes, I've added them" - Proceed to create documentation
+   - "Skip for now" - Continue without documenting custom servers
+   ```
+
+3. **Read .mcp.json and identify custom servers:**
+
+   ```python
+   Read(file_path=".mcp.json")
+   ```
+
+   Parse the JSON and filter out standard servers:
+   - Exclude: `claude-context`, `tavily`, `Ref`
+   - Keep: All other servers as "custom"
+
+4. **If custom servers found, create `.claude/rules/custom/mcp-tools.md`:**
+
+   Generate content with this structure:
+
+   ```markdown
+   ## Custom MCP Servers
+
+   This project uses the following custom MCP servers in addition to the standard ones (claude-context, tavily, Ref).
+
+   ### [Server Name]
+
+   **Command:** `[command from config]`
+   **Args:** `[args from config]`
+
+   **When to use:**
+   - [Brief description - ask user or infer from server name]
+
+   **Example usage:**
+   ```
+   mcp__[server-name]__[tool_name](param="value")
+   ```
+
+   [Repeat for each custom server]
+   ```
+
+5. **Write the custom MCP tools rule:**
+   ```python
+   Write(file_path=".claude/rules/custom/mcp-tools.md", content=generated_content)
+   ```
+
+   If no custom servers found, skip creating this file.
+
+---
+
 ### Phase 1: Project Discovery
 
 1. **Scan Directory Structure:**
@@ -147,11 +234,16 @@ Display a summary like:
 ├─────────────────────────────────────────────────────────────┤
 │ Created:                                                    │
 │   ✓ .claude/rules/custom/project.md                        │
+│   ✓ .claude/rules/custom/mcp-tools.md (if custom servers)  │
 │                                                             │
 │ Semantic Search:                                            │
 │   ✓ Claude Context index initialized                       │
 │   ✓ Excluded: node_modules, __pycache__, .venv, cdk.out... │
 │   ✓ Indexed X files                                        │
+│                                                             │
+│ MCP Servers:                                                │
+│   ✓ Standard: claude-context, tavily, Ref                  │
+│   ✓ Custom: [list custom server names or "none"]           │
 ├─────────────────────────────────────────────────────────────┤
 │ Next Steps:                                                 │
 │   1. Run 'ccp' to reload with new rules in context         │

@@ -109,20 +109,3 @@ mcp__Ref__ref_read_url(url="https://blog.example.com/article")
 - **Before marking complete:** Confirm clean diagnostics
 
 **Never skip diagnostics.** Passing tests don't guarantee no type errors or linting issues.
-
-### MCP Funnel - Tool Discovery
-
-**Tools:**
-- `mcp_mcp-funnel_discover_tools_by_words` - Find tools by keywords
-- `mcp_mcp-funnel_get_tool_schema` - Get tool parameters
-- `mcp_mcp-funnel_bridge_tool_request` - Execute discovered tools
-
-**When to use:**
-- Need specialized functionality not in core tools
-- Exploring available MCP servers
-- Extending capabilities for specific tasks
-
-**Pattern:**
-1. Discover tools: `discover_tools_by_words("database migration")`
-2. Get schema: `get_tool_schema("discovered_tool_name")`
-3. Execute: `bridge_tool_request("tool_name", {args})`

@@ -4,6 +4,10 @@ model: opus
 ---
 # VERIFY MODE: Verification and Quality Assurance Process with Code Review
 
+> **WARNING: DO NOT use the Task tool with any subagent_type (Explore, Plan, general-purpose).**
+> Perform ALL verification yourself using direct tool calls (Read, Grep, Glob, Bash, MCP tools).
+> Sub-agents lose context and make verification inconsistent.
+
 ## The Process
 
 Tests → Program execution → Call chain analysis → Coverage → Quality checks → Code review → E2E → Final verification

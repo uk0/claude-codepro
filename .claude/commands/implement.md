@@ -4,6 +4,10 @@ model: opus
 ---
 # IMPLEMENT MODE: Task Execution with Mandatory Context Gathering
 
+> **WARNING: DO NOT use the Task tool with any subagent_type (Explore, Plan, general-purpose).**
+> Perform ALL exploration and implementation yourself using direct tool calls (Read, Grep, Glob, MCP tools).
+> Sub-agents lose context and make implementation inconsistent.
+
 **Execute ALL tasks continuously. NO stopping unless context manager says context is full.**
 
 ## ⛔ CRITICAL: Task Completion Tracking is MANDATORY
@@ -48,7 +52,6 @@ Update counts:
 | **claude-context** | Find related code | `mcp__claude-context__search_code` - "error handling patterns" |
 | **Ref** | Library API lookup | `mcp__Ref__ref_search_documentation` - "pytest fixtures" |
 | **tavily** | Research solutions | `mcp__tavily__tavily-search` - Debug errors, find examples |
-| **mcp-funnel** | Specialized tools | `mcp__mcp-funnel__discover_tools_by_words` - Find helpers |
 
 **Before starting, ensure codebase is indexed for semantic search:**
 ```
@@ -59,7 +62,6 @@ mcp__claude-context__get_indexing_status(path="/absolute/path/to/project")
 - Use `mcp__claude-context__search_code` to find similar implementations and patterns
 - Use `mcp__Ref__ref_search_documentation` when unsure about library/framework APIs
 - Use `mcp__tavily__tavily-search` to research error messages or find solutions
-- Use `mcp__mcp-funnel__discover_tools_by_words` to find specialized tools for specific tasks
 
 ## ⚠️ CRITICAL: Migration/Refactoring Tasks
 

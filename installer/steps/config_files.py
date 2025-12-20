@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -14,15 +13,35 @@ from installer.steps.base import BaseStep
 if TYPE_CHECKING:
     from installer.context import InstallContext
 
+REQUIRED_MCP_SERVERS = {"claude-context", "tavily", "Ref"}
 
-def backup_and_replace_mcp_config(config_file: Path, new_config: dict[str, Any], *, skip_backup: bool = False) -> None:
-    """Backup existing MCP config and replace with new config."""
-    if config_file.exists() and not skip_backup:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_file = config_file.with_suffix(f".json.backup.{timestamp}")
-        backup_file.write_text(config_file.read_text())
 
-    config_file.write_text(json.dumps(new_config, indent=2) + "\n")
+def merge_mcp_config(config_file: Path, new_config: dict[str, Any]) -> int:
+    """Merge required MCP servers into existing config, preserving user servers.
+
+    Returns the number of servers added.
+    """
+    existing_config: dict[str, Any] = {"mcpServers": {}}
+
+    if config_file.exists():
+        try:
+            existing_config = json.loads(config_file.read_text())
+        except json.JSONDecodeError:
+            existing_config = {"mcpServers": {}}
+
+    if "mcpServers" not in existing_config:
+        existing_config["mcpServers"] = {}
+
+    new_servers = new_config.get("mcpServers", {})
+    added_count = 0
+
+    for server_key in REQUIRED_MCP_SERVERS:
+        if server_key in new_servers and server_key not in existing_config["mcpServers"]:
+            existing_config["mcpServers"][server_key] = new_servers[server_key]
+            added_count += 1
+
+    config_file.write_text(json.dumps(existing_config, indent=2) + "\n")
+    return added_count
 
 
 class ConfigFilesStep(BaseStep):
@@ -60,44 +79,27 @@ class ConfigFilesStep(BaseStep):
                 download_directory(".qlty", qlty_dir, config)
 
         mcp_file = ctx.project_dir / ".mcp.json"
+        added_count = 0
         if ui:
-            with ui.spinner("Installing MCP configuration..."):
+            with ui.spinner("Configuring MCP servers..."):
                 with tempfile.TemporaryDirectory() as tmpdir:
                     temp_mcp = Path(tmpdir) / ".mcp.json"
                     if download_file(".mcp.json", temp_mcp, config):
                         try:
                             new_config = json.loads(temp_mcp.read_text())
-                            backup_and_replace_mcp_config(mcp_file, new_config, skip_backup=ctx.local_mode)
+                            added_count = merge_mcp_config(mcp_file, new_config)
                         except json.JSONDecodeError as e:
                             ui.warning(f"Failed to parse .mcp.json: {e}")
-            ui.success("Installed .mcp.json")
+            if added_count > 0:
+                ui.success(f"Added {added_count} MCP server(s) to .mcp.json")
+            else:
+                ui.success("MCP servers already configured")
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
                 temp_mcp = Path(tmpdir) / ".mcp.json"
                 if download_file(".mcp.json", temp_mcp, config):
                     new_config = json.loads(temp_mcp.read_text())
-                    backup_and_replace_mcp_config(mcp_file, new_config, skip_backup=ctx.local_mode)
-
-        funnel_file = ctx.project_dir / ".mcp-funnel.json"
-        if not funnel_file.exists():
-            if ui:
-                with ui.spinner("Installing MCP Funnel configuration..."):
-                    with tempfile.TemporaryDirectory() as tmpdir:
-                        temp_funnel = Path(tmpdir) / ".mcp-funnel.json"
-                        if download_file(".mcp-funnel.json", temp_funnel, config):
-                            try:
-                                funnel_file.write_text(temp_funnel.read_text())
-                            except Exception as e:
-                                ui.warning(f"Failed to install .mcp-funnel.json: {e}")
-                ui.success("Installed .mcp-funnel.json")
-            else:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    temp_funnel = Path(tmpdir) / ".mcp-funnel.json"
-                    if download_file(".mcp-funnel.json", temp_funnel, config):
-                        funnel_file.write_text(temp_funnel.read_text())
-        else:
-            if ui:
-                ui.success(".mcp-funnel.json already exists, skipping")
+                    merge_mcp_config(mcp_file, new_config)
 
     def rollback(self, ctx: InstallContext) -> None:
         """Remove generated config files."""

@@ -42,7 +42,7 @@ const insideItems: InsideItem[] = [
       "Claude Context - Local semantic code search",
       "Tavily - Web search and mapping",
       "Ref - AI-powered code context retrieval",
-      "MCP Funnel - Plug-in additional MCP servers",
+      "MCP Lazy Loading - Reduces MCP context usage",
     ],
   },
   {

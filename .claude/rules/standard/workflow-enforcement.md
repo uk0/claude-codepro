@@ -1,6 +1,32 @@
 # Workflow Enforcement Rules
 
-**Rule:** Follow the /plan → /implement → /verify workflow exactly. No shortcuts.
+**Rule:** Follow the /plan → /implement → /verify workflow exactly. No shortcuts. No sub-agents.
+
+## No Sub-Agents Policy
+
+**DO NOT use the Task tool with any subagent_type during project workflows.**
+
+### Prohibited
+
+| Subagent Type | Why Prohibited |
+|---------------|----------------|
+| `Explore` | Loses conversation context, use direct tools instead |
+| `Plan` | Use `/plan` command, not Task tool |
+| `general-purpose` | Maintain context yourself with direct tool calls |
+
+### Use Instead
+
+| Instead of Sub-Agent | Use These Directly |
+|----------------------|---------------------|
+| `Task(subagent_type="Explore")` | `Read`, `Grep`, `Glob`, `mcp__claude-context__search_code` |
+| `Task(subagent_type="Plan")` | `/plan` slash command |
+| `Task(subagent_type="general-purpose")` | Direct tool calls (Read, Grep, Bash, etc.) |
+
+### Allowed Task Tool Usage
+
+The Task tool IS allowed for:
+- **Skills:** Invoking project skills via `Skill` tool
+- **Background shells:** Using `run_in_background` for long-running commands
 
 ## Plan-Implement-Verify Lifecycle
 

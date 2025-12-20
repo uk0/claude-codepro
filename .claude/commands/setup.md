@@ -8,52 +8,7 @@ model: opus
 
 ---
 
-## ⚠️ IMPORTANT: MCP Funnel Configuration (Read First!)
-
-**Before running /setup, ensure your MCP servers are configured in `mcp-funnel.json`.**
-
-MCP Funnel acts as a proxy that dynamically loads tools from multiple MCP servers without consuming context tokens until needed. This setup command will:
-1. Discover all tools available through MCP Funnel
-2. Generate `.claude/rules/custom/funnel-tools.md` documenting those tools
-3. This documentation becomes part of your project context for future sessions
-
-**To add MCP servers to MCP Funnel:**
-1. Edit your `mcp-funnel.json` configuration file
-2. Add servers that are token-consuming (large tool lists) to the funnel
-3. Servers added to MCP Funnel are loaded on-demand, saving context tokens
-
-**Example mcp-funnel.json structure:**
-```json
-{
-  "servers": {
-    "pypi-query": { "command": "uvx", "args": ["pypi-query-mcp"] },
-    "aws-pricing": { "command": "uvx", "args": ["awslabs.aws-pricing-mcp-server"] }
-  }
-}
-```
-
----
-
 ## Execution Sequence
-
-### Phase 0: MCP Funnel Check (MANDATORY FIRST STEP)
-
-**Ask the user:**
-
-> **Have you configured your MCP servers in `mcp-funnel.json`?**
->
-> MCP Funnel allows you to add token-consuming MCP servers that will be loaded on-demand.
-> During this setup, I'll discover all tools from MCP Funnel and generate documentation
-> at `.claude/rules/custom/funnel-tools.md` that will be included in future sessions.
->
-> Options:
-> 1. **Yes, continue** - Proceed with setup
-> 2. **Wait** - I'll configure mcp-funnel.json first, then re-run /setup
-> 3. **Skip funnel tools** - Continue without generating funnel-tools.md
-
-**If user chooses "Wait":** Stop execution and inform them to re-run `/setup` after configuration.
-
-**If user chooses "Skip":** Skip Phase 4 (Funnel Tools Generation) but continue with other phases.
 
 ### Phase 1: Project Discovery
 
@@ -182,63 +137,7 @@ MCP Funnel acts as a proxy that dynamically loads tools from multiple MCP server
    )
    ```
 
-### Phase 4: Generate Funnel Tools Documentation
-
-**Skip this phase if user chose "Skip funnel tools" in Phase 0.**
-
-1. **Discover all available tools from MCP Funnel:**
-   ```python
-   # Discover tools without enabling (just to see what's available)
-   mcp__mcp-funnel__discover_tools_by_words(words="", enable=false)
-   ```
-
-2. **For each MCP server discovered, get tool schemas:**
-   ```python
-   # Get schema for each tool to understand required/optional parameters
-   mcp__mcp-funnel__get_tool_schema(tool="server__tool_name")
-   ```
-
-3. **Generate `.claude/rules/custom/funnel-tools.md` with this structure:**
-
-```markdown
-## Funnel Tools
-
-**Discover tools if not loaded:**
-```
-mcp__mcp-funnel__discover_tools_by_words(words="keyword", enable=true)
-```
-
-### [Server Name] (`server-prefix__*`)
-
-[Brief description of what this server provides]
-
-| Tool | Required | Optional | Description |
-|------|----------|----------|-------------|
-| `tool_name` | `param1`, `param2` | `optional_param` | What it does |
-
-**Use case:** [When to use this server]
-
-**Workflow:** [If applicable, show typical tool call sequence]
-
----
-
-## Usage Examples
-
-```python
-# Example calls via bridge
-mcp__mcp-funnel__bridge_tool_request(
-    tool="server__tool_name",
-    arguments={"param": "value"}
-)
-```
-```
-
-4. **Write the funnel-tools.md file:**
-   ```python
-   Write(file_path=".claude/rules/custom/funnel-tools.md", content=generated_content)
-   ```
-
-### Phase 5: Completion Summary
+### Phase 4: Completion Summary
 
 Display a summary like:
 
@@ -248,16 +147,11 @@ Display a summary like:
 ├─────────────────────────────────────────────────────────────┤
 │ Created:                                                    │
 │   ✓ .claude/rules/custom/project.md                        │
-│   ✓ .claude/rules/custom/funnel-tools.md (if generated)    │
 │                                                             │
 │ Semantic Search:                                            │
 │   ✓ Claude Context index initialized                       │
 │   ✓ Excluded: node_modules, __pycache__, .venv, cdk.out... │
 │   ✓ Indexed X files                                        │
-│                                                             │
-│ MCP Funnel:                                                 │
-│   ✓ Discovered X servers with Y tools                      │
-│   ✓ Documentation generated for future sessions            │
 ├─────────────────────────────────────────────────────────────┤
 │ Next Steps:                                                 │
 │   1. Run 'ccp' to reload with new rules in context         │
@@ -273,7 +167,6 @@ Display a summary like:
 - **If indexing fails:** Log error, continue with other steps, suggest manual indexing
 - **If README.md missing:** Ask user for brief project description
 - **If package.json/pyproject.toml missing:** Infer from file extensions and directory structure
-- **If MCP Funnel unavailable:** Skip Phase 4, inform user they can add it later
 - **If indexing gets stuck:** Clear index and retry with `force=true`
 
 ## Important Notes
@@ -282,8 +175,6 @@ Display a summary like:
 - Don't overwrite existing project.md without confirmation
 - Keep project.md concise - it will be included in every Claude Code session
 - Focus on information that helps Claude understand how to work with this codebase
-- The funnel-tools.md file documents MCP servers for on-demand tool loading
-- Users can update mcp-funnel.json anytime and re-run /setup to regenerate docs
 
 ## Indexing Exclusion Patterns
 

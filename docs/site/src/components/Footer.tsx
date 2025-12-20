@@ -102,15 +102,6 @@ const Footer = () => {
               >
                 Max Ritter
               </a>
-              {" "}and{" "}
-              <a
-                href="https://manuel-vogel.de/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Manuel Vogel
-              </a>
             </p>
             <a
               href="https://github.com/maxritter/claude-codepro"

@@ -71,7 +71,7 @@ Built on [Claude Code's modular rules](https://code.claude.com/docs/en/memory#mo
 - **Claude Context** - Local vector store based semantic code search for token-efficient retrieval
 - **Tavily** - Real-time web search capabilities and powerful web mapping tool
 - **Ref** - AI-powered code context retrieval, similar to Context7 but uses less context
-- **MCP Funnel** - Allows to plug-in more MCP servers as needed without wasting context
+- **MCP Lazy Loading** - Intelligently reduces context usage by lazy loading MCP servers
 
 ### 🛠️ Intelligent Hooks for Quality, Standards and Context
 
@@ -144,7 +144,6 @@ paths: src/**/*.py
 - **[sirmalloc/ccstatusline](https://github.com/sirmalloc/ccstatusline)** - CC Status line integration
 - **[tavily-ai/tavily-mcp](https://github.com/tavily-ai/tavily-mcp)** - Web search and mapping capabilities
 - **[ref-tools/ref-tools-mcp](https://github.com/ref-tools/ref-tools-mcp)** - Library code context retrieval
-- **[chris-schra/mcp-funnel](https://github.com/chris-schra/mcp-funnel)** - MCP Tool filtering
 - **[astral-sh/uv](https://github.com/astral-sh/uv)** - Fast Python package manager
 - **[astral-sh/ruff](https://github.com/astral-sh/ruff)** - Fast Python linter and formatter
 - **[DetachHead/basedpyright](https://github.com/DetachHead/basedpyright)** - Enhanced Python type checker

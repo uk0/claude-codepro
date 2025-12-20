@@ -28,7 +28,7 @@ const faqs: FaqItem[] = [
   },
   {
     question: "What MCP servers are included?",
-    answer: "Claude CodePro includes Claude Mem (persistent memory), Claude Context (semantic search), Tavily (web search), Ref (code context retrieval), and MCP Funnel (for adding more servers). All are pre-configured and ready to use.",
+    answer: "Claude CodePro includes Claude Mem (persistent memory), Claude Context (semantic search), Tavily (web search), Ref (code context retrieval), and MCP Lazy Loading (improves context). All are pre-configured and ready to use.",
   },
 ];
 

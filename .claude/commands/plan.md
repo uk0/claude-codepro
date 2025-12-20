@@ -183,7 +183,6 @@ Questions:
 | **claude-context** | Semantic code search | `mcp__claude-context__search_code` - Find implementations by concept |
 | **Ref** | Library/framework docs | `mcp__Ref__ref_search_documentation` - Look up API usage |
 | **tavily** | External research | `mcp__tavily__tavily-search` - Research best practices |
-| **mcp-funnel** | Discover more tools | `mcp__mcp-funnel__discover_tools_by_words` - Find specialized tools |
 
 **Before exploring, check if codebase is indexed:**
 ```

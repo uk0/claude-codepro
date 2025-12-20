@@ -65,9 +65,6 @@ class ClaudeFilesStep(BaseStep):
             if not file_path:
                 continue
 
-            if "/rules/custom/" in file_path:
-                continue
-
             if "__pycache__" in file_path:
                 continue
 
@@ -76,6 +73,8 @@ class ClaudeFilesStep(BaseStep):
 
             if not ctx.install_python:
                 if "file_checker_python.py" in file_path:
+                    continue
+                if "python-rules.md" in file_path:
                     continue
 
             if "/commands/" in file_path:

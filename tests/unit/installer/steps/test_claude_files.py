@@ -137,10 +137,10 @@ class TestClaudeFilesStep:
 
 
 class TestClaudeFilesCustomRulesPreservation:
-    """Test that custom rules are never overwritten."""
+    """Test that custom rules from repo are installed and user files preserved."""
 
-    def test_custom_rules_not_overwritten(self):
-        """ClaudeFilesStep never overwrites rules/custom/ files."""
+    def test_custom_rules_installed_and_user_files_preserved(self):
+        """ClaudeFilesStep installs repo custom rules and preserves user files."""
         from installer.context import InstallContext
         from installer.steps.claude_files import ClaudeFilesStep
         from installer.ui import Console
@@ -154,17 +154,17 @@ class TestClaudeFilesCustomRulesPreservation:
             source_rules_custom.mkdir(parents=True)
             source_rules_standard.mkdir(parents=True)
 
-            # Repo has custom rules (these should NOT be copied)
-            (source_rules_custom / "repo-custom.md").write_text("repo custom rule")
+            # Repo has custom rules (these SHOULD be copied now)
+            (source_rules_custom / "python-rules.md").write_text("python rules from repo")
             # Repo has standard rules (these SHOULD be copied)
             (source_rules_standard / "standard-rule.md").write_text("standard rule")
 
-            # Destination already has user's custom rules
+            # Destination already has user's custom rules (not in repo)
             dest_dir = Path(tmpdir) / "dest"
             dest_claude = dest_dir / ".claude"
             dest_rules_custom = dest_claude / "rules" / "custom"
             dest_rules_custom.mkdir(parents=True)
-            (dest_rules_custom / "user-custom.md").write_text("USER CUSTOM RULE - DO NOT OVERWRITE")
+            (dest_rules_custom / "my-project-rules.md").write_text("USER PROJECT RULES - PRESERVED")
 
             ctx = InstallContext(
                 project_dir=dest_dir,
@@ -175,12 +175,13 @@ class TestClaudeFilesCustomRulesPreservation:
 
             step.run(ctx)
 
-            # User's custom rule should be PRESERVED
-            assert (dest_rules_custom / "user-custom.md").exists()
-            assert (dest_rules_custom / "user-custom.md").read_text() == "USER CUSTOM RULE - DO NOT OVERWRITE"
+            # User's custom rule should be PRESERVED (not deleted)
+            assert (dest_rules_custom / "my-project-rules.md").exists()
+            assert (dest_rules_custom / "my-project-rules.md").read_text() == "USER PROJECT RULES - PRESERVED"
 
-            # Repo's custom rule should NOT be copied
-            assert not (dest_rules_custom / "repo-custom.md").exists()
+            # Repo's custom rule SHOULD be copied
+            assert (dest_rules_custom / "python-rules.md").exists()
+            assert (dest_rules_custom / "python-rules.md").read_text() == "python rules from repo"
 
             # Standard rules SHOULD be copied
             assert (dest_claude / "rules" / "standard" / "standard-rule.md").exists()

@@ -14,13 +14,12 @@ if TYPE_CHECKING:
 
 OBSOLETE_ENV_KEYS = [
     "MILVUS_TOKEN",
+    "MILVUS_ADDRESS",
     "VECTOR_STORE_USERNAME",
     "VECTOR_STORE_PASSWORD",
     "EXA_API_KEY",
     "GEMINI_API_KEY",
 ]
-
-LOCAL_MILVUS_ADDRESS = "http://host.docker.internal:19530"
 
 
 def remove_env_key(key: str, env_file: Path) -> bool:
@@ -117,8 +116,6 @@ class EnvironmentStep(BaseStep):
             if removed_keys and ui:
                 ui.print(f"  [dim]Removed obsolete keys: {', '.join(removed_keys)}[/dim]")
 
-            set_env_key("MILVUS_ADDRESS", LOCAL_MILVUS_ADDRESS, env_file)
-
         if append_mode:
             if ui:
                 ui.success("Found existing .env file")
@@ -181,9 +178,6 @@ class EnvironmentStep(BaseStep):
         add_env_key("OPENAI_API_KEY", openai_api_key, env_file)
         add_env_key("TAVILY_API_KEY", tavily_api_key, env_file)
         add_env_key("REF_API_KEY", ref_api_key, env_file)
-
-        if not append_mode:
-            set_env_key("MILVUS_ADDRESS", LOCAL_MILVUS_ADDRESS, env_file)
 
         if ui:
             if append_mode:

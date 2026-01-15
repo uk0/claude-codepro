@@ -1,7 +1,7 @@
 {
-  "name": "Claude CodePro Academy",
-  "short_name": "Claude CodePro",
-  "description": "Master Professional Software Development with Claude Code",
+  "name": "Claude CodePro",
+  "short_name": "CodePro",
+  "description": "Professional Development Environment for Claude Code",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

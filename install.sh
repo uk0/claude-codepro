@@ -96,7 +96,18 @@ confirm_local_install() {
     echo "    • Add PATH and 'ccp' alias to your shell config (~/.bashrc, ~/.zshrc, fish)"
     echo "    • Configure Claude Code (~/.claude.json): theme, auto-compact off, MCP servers"
     echo ""
-    read -r -p "  Continue? [y/N]: " confirm
+    # Read from /dev/tty for curl|bash compatibility
+    confirm=""
+    if [ -t 0 ]; then
+        printf "  Continue? [y/N]: "
+        read -r confirm
+    elif [ -e /dev/tty ]; then
+        printf "  Continue? [y/N]: "
+        read -r confirm < /dev/tty
+    else
+        echo "  No interactive terminal available, aborting."
+        exit 1
+    fi
     case "$confirm" in
         [Yy]|[Yy][Ee][Ss]) ;;
         *)
@@ -161,7 +172,21 @@ if ! is_in_container; then
     echo "    1) Dev Container - Isolated environment, consistent tooling"
     echo "    2) Local - Install directly on your system via Homebrew (macOS/Linux)"
     echo ""
-    read -r -p "  Enter choice [1-2]: " choice
+
+    # Read from /dev/tty for curl|bash compatibility; default to Dev Container if no TTY
+    choice=""
+    if [ -t 0 ]; then
+        # stdin is a terminal
+        printf "  Enter choice [1-2]: "
+        read -r choice
+    elif [ -e /dev/tty ]; then
+        # stdin piped, but /dev/tty available
+        printf "  Enter choice [1-2]: "
+        read -r choice < /dev/tty
+    else
+        echo "  No interactive terminal available, defaulting to Dev Container."
+        choice="1"
+    fi
 
     case $choice in
         2)

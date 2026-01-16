@@ -251,6 +251,10 @@ else
     exit 1
 fi
 chmod +x "$INSTALLER_PATH"
+# Remove macOS quarantine flag if on Darwin
+if [ "$(uname -s)" = "Darwin" ]; then
+    xattr -cr "$INSTALLER_PATH" 2>/dev/null || true
+fi
 echo "  [OK] Installer downloaded"
 
 echo "  [..] Downloading ccp binary..."
@@ -263,6 +267,10 @@ else
     exit 1
 fi
 chmod +x "$CCP_PATH"
+# Remove macOS quarantine flag if on Darwin
+if [ "$(uname -s)" = "Darwin" ]; then
+    xattr -cr "$CCP_PATH" 2>/dev/null || true
+fi
 echo "  [OK] CCP binary downloaded"
 echo ""
 

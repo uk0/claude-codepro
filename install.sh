@@ -140,7 +140,6 @@ download_installer() {
     rm -rf "$installer_dir"
     mkdir -p "$installer_dir/installer"
 
-    # Use GitHub API to list all files in installer directory
     local api_url="https://api.github.com/repos/${REPO}/git/trees/v${VERSION}?recursive=true"
     local tree_json=""
 
@@ -155,13 +154,9 @@ download_installer() {
         exit 1
     fi
 
-    # Extract installer/*.py files using grep/sed (POSIX compatible)
-    # Filter: starts with installer/, ends with .py, excludes __pycache__ and dist/build
-    # Note: GitHub API JSON has space after colon: "path": "installer/..."
     echo "$tree_json" | grep -oE '"path": ?"installer/[^"]*\.py"' | sed 's/"path": *"//g; s/"$//g' | while IFS= read -r file_path; do
-        # Skip __pycache__, dist, build directories
         case "$file_path" in
-            *__pycache__*|*dist/*|*build/*) continue ;;
+        *__pycache__* | *dist/* | *build/*) continue ;;
         esac
 
         local dest_file="$installer_dir/$file_path"
@@ -228,6 +223,23 @@ download_ccp_binary() {
     fi
 
     echo "  [OK] CCP binary downloaded"
+}
+
+install_installer_deps() {
+    echo "  [..] Installing installer dependencies..."
+    # Install minimal dependencies needed to run the Python installer
+    # Use --quiet and --disable-pip-version-check to reduce noise
+    python3 -m pip install --quiet --disable-pip-version-check \
+        "rich>=14.0.0" \
+        "httpx>=0.28.1" \
+        "typer>=0.21.1" \
+        "platformdirs>=4.3.6" \
+        "InquirerPy>=0.3.4" 2>/dev/null || {
+        echo "  [!!] Failed to install dependencies"
+        echo "      Please ensure pip is available: python3 -m pip --version"
+        exit 1
+    }
+    echo "  [OK] Dependencies installed"
 }
 
 run_python_installer() {
@@ -306,6 +318,8 @@ echo ""
 download_ccp_binary
 
 download_installer
+
+install_installer_deps
 
 export PYTHONPATH=".claude/installer:${PYTHONPATH:-}"
 

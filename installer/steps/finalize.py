@@ -84,72 +84,80 @@ class FinalizeStep(BaseStep):
 
         ui.success_box("Installation Complete!", installed_items)
 
+        steps: list[tuple[str, str]] = []
+
         if ctx.is_local_install:
-            ui.next_steps(
-                [
-                    (
-                        "Reload your shell",
-                        "Run: source ~/.zshrc (or ~/.bashrc, or restart terminal)",
-                    ),
-                    ("Start Claude CodePro", "Run: ccp"),
-                    ("Connect IDE", "Run: /ide → Enables real-time diagnostics"),
-                    (
-                        "Custom MCP Servers (Optional)",
-                        "Add your MCP servers to mcp_servers.json, then run /setup\n"
-                        "     to generate documentation. Use mcp-cli to interact with them.",
-                    ),
-                    (
-                        "Claude MEM Dashboard (Optional)",
-                        "View stored memories at http://localhost:37777",
-                    ),
-                    (
-                        "Spec-Driven Mode",
-                        '/spec "your task" → For new features with planning and verification',
-                    ),
-                    (
-                        "Quick Mode",
-                        "Just chat → For bug fixes and small changes without a spec",
-                    ),
-                ]
+            steps.append(
+                (
+                    "Reload your shell",
+                    "Run: source ~/.zshrc (or ~/.bashrc, or restart terminal)",
+                )
             )
         else:
             project_slug = ctx.project_dir.name.lower().replace(" ", "-").replace("_", "-")
-
-            ui.next_steps(
-                [
-                    (
-                        "Connect to dev container",
-                        f"Option A: Use VS Code's integrated terminal (required for image pasting)\n"
-                        f"     Option B: Use your favorite terminal (iTerm, Warp, etc.) and run:\n"
-                        f'     docker exec -it $(docker ps --filter "name={project_slug}" -q) zsh',
-                    ),
-                    ("Start Claude CodePro", "Run: ccp"),
-                    ("Connect IDE", "Run: /ide → Enables real-time diagnostics"),
-                    (
-                        "Image Pasting (Optional)",
-                        "Install dkodr.claudeboard extension via the Marketplace\n"
-                        "     Only works in VS Code's integrated terminal",
-                    ),
-                    (
-                        "Custom MCP Servers (Optional)",
-                        "Add your MCP servers to mcp_servers.json, then run /setup\n"
-                        "     to generate documentation. Use mcp-cli to interact with them.",
-                    ),
-                    (
-                        "Claude MEM Dashboard (Optional)",
-                        "View stored memories and observations at http://localhost:37777\n"
-                        "     (Check VS Code Ports tab if 37777 is unavailable - may be 37778)",
-                    ),
-                    (
-                        "Spec-Driven Mode",
-                        '/spec "your task" → For new features with planning and verification',
-                    ),
-                    (
-                        "Quick Mode",
-                        "Just chat → For bug fixes and small changes without a spec",
-                    ),
-                ]
+            steps.append(
+                (
+                    "Connect to dev container",
+                    f"Option A: Use VS Code's integrated terminal (required for image pasting)\n"
+                    f"     Option B: Use your favorite terminal (iTerm, Warp, etc.) and run:\n"
+                    f'     docker exec -it $(docker ps --filter "name={project_slug}" -q) zsh',
+                )
             )
+
+        steps.extend(
+            [
+                ("Start Claude CodePro", "Run: ccp"),
+                ("Connect IDE", "Run: /ide → Enables real-time diagnostics"),
+            ]
+        )
+
+        if not ctx.is_local_install:
+            steps.append(
+                (
+                    "Image Pasting (Optional)",
+                    "Install dkodr.claudeboard extension via the Marketplace\n"
+                    "     Only works in VS Code's integrated terminal",
+                )
+            )
+
+        steps.append(
+            (
+                "Custom MCP Servers (Optional)",
+                "Add your MCP servers to mcp_servers.json, then run /setup\n"
+                "     to generate documentation. Use mcp-cli to interact with them.",
+            )
+        )
+
+        if ctx.is_local_install:
+            steps.append(
+                (
+                    "Claude MEM Dashboard (Optional)",
+                    "View stored memories at http://localhost:37777",
+                )
+            )
+        else:
+            steps.append(
+                (
+                    "Claude MEM Dashboard (Optional)",
+                    "View stored memories and observations at http://localhost:37777\n"
+                    "     (Check VS Code Ports tab if 37777 is unavailable - may be 37778)",
+                )
+            )
+
+        steps.extend(
+            [
+                (
+                    "Spec-Driven Mode",
+                    '/spec "your task" → For new features with planning and verification',
+                ),
+                (
+                    "Quick Mode",
+                    "Just chat → For bug fixes and small changes without a spec",
+                ),
+            ]
+        )
+
+        ui.next_steps(steps)
 
         ui.rule()
         ui.print()

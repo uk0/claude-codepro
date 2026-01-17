@@ -6,7 +6,7 @@
 
 Start shipping systematically with Endless Mode, Spec-Driven Development, Skills, TDD, LSP, Semantic Search, Persistent Memory, Quality Hooks, Modular Rules System, and much more 🚀
 
-![Opus 4.5](https://img.shields.io/badge/Opus_4.5-Compatible-purple.svg)
+[![Version](https://img.shields.io/github/v/release/maxritter/claude-codepro?label=Version&color=orange)](https://github.com/maxritter/claude-codepro/releases)
 ![Endless Mode](https://img.shields.io/badge/Endless-Mode-red.svg)
 ![Spec-Driven](https://img.shields.io/badge/Spec-Driven-yellow.svg)
 ![TDD](https://img.shields.io/badge/TDD-Enforcement-green.svg)
@@ -15,6 +15,17 @@ Start shipping systematically with Endless Mode, Spec-Driven Development, Skills
 #### ⭐ [Star this repository](https://github.com/maxritter/claude-codepro) · 🌐 [Visit the website](https://claude-code.pro) · 💼 [Follow for updates](https://www.linkedin.com/in/rittermax/) · ✉️ [Get in touch](mailto:mail@maxritter.net)
 
 </div>
+
+---
+
+## 📑 Table of Contents
+
+- [Getting Started](#-getting-started)
+- [What's Inside](#-whats-inside)
+- [Usage](#-usage)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
 
 ---
 
@@ -116,7 +127,7 @@ Claude CodePro is designed to be token-efficient, but quality has its cost. For 
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Usage
 
 ### First Time Setup
 
@@ -178,9 +189,19 @@ Claude CodePro uses [Claude Code's modular rules](https://code.claude.com/docs/e
 
 ## 🤝 Contributing
 
-**Pull Requests are welcome!** If you have new features, improvements, or bug fixes, feel free to open a PR.
+**Pull Requests** - New features, improvements, and bug fixes are welcome. Open a PR to contribute.
 
-**Note:** Issues are disabled. This project evolves alongside my professional work as a freelancer, and I don't have the capacity to maintain a public issue tracker. If you want a feature or find a bug, the best way to contribute is to submit a PR.
+**Issues** - Found a bug or have a feature request? [Open an issue](https://github.com/maxritter/claude-codepro/issues).
+
+---
+
+## 📄 License
+
+This project is dual-licensed. See the [LICENSE](LICENSE) file for details.
+
+**Free (AGPL-3.0)** - Personal use, students, educators, nonprofits, and open source projects.
+
+**Commercial License** - For proprietary or closed-source projects, [purchase a license](https://license.claude-code.pro).
 
 ---
 

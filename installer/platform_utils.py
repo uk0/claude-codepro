@@ -16,6 +16,11 @@ def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
 
 
+def is_homebrew_available() -> bool:
+    """Check if Homebrew is available."""
+    return shutil.which("brew") is not None
+
+
 def get_shell_config_files() -> list[Path]:
     """Get list of shell configuration files for the current user."""
     home = Path.home()

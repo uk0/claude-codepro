@@ -268,3 +268,99 @@ class TestExpiredTrialLicensePrompt:
         # Empty license key should be rejected without calling subprocess
         license_key = ""
         assert not license_key  # Empty string is falsy
+
+
+class TestWrapperUpdateCheck:
+    """Tests for wrapper auto-update checking functionality."""
+
+    def test_update_check_runs_when_update_available(self, tmp_path: Path) -> None:
+        """Update check calls check_for_update when enabled."""
+        from io import StringIO
+
+        from ccp.wrapper import ClaudeWrapper
+
+        pipe_dir = tmp_path / "pipes"
+        wrapper = ClaudeWrapper(claude_args=[], pipe_dir=pipe_dir, skip_update_check=False)
+
+        with patch("ccp.updater.check_for_update") as mock_check:
+            mock_check.return_value = (True, "4.5.8", "4.6.0")
+            # Mock the /dev/tty open to simulate TTY with "n" response
+            mock_tty = MagicMock()
+            mock_tty.__enter__ = MagicMock(return_value=StringIO("n\n"))
+            mock_tty.__exit__ = MagicMock(return_value=False)
+            with patch("builtins.open", return_value=mock_tty):
+                result = wrapper._check_and_prompt_update()
+
+        mock_check.assert_called_once()
+        assert result is False  # User declined
+
+    def test_update_check_skipped_when_flag_set(self, tmp_path: Path) -> None:
+        """Update check is skipped when skip_update_check=True."""
+        from ccp.wrapper import ClaudeWrapper
+
+        pipe_dir = tmp_path / "pipes"
+        wrapper = ClaudeWrapper(claude_args=[], pipe_dir=pipe_dir, skip_update_check=True)
+
+        with patch("ccp.updater.check_for_update") as mock_check:
+            result = wrapper._check_and_prompt_update()
+
+        mock_check.assert_not_called()
+        assert result is False
+
+    def test_update_check_no_prompt_when_up_to_date(self, tmp_path: Path) -> None:
+        """No prompt shown when already on latest version."""
+        from ccp.wrapper import ClaudeWrapper
+
+        pipe_dir = tmp_path / "pipes"
+        wrapper = ClaudeWrapper(claude_args=[], pipe_dir=pipe_dir, skip_update_check=False)
+
+        with patch("ccp.updater.check_for_update") as mock_check:
+            mock_check.return_value = (False, "4.5.8", "4.5.8")
+            with patch("builtins.input") as mock_input:
+                result = wrapper._check_and_prompt_update()
+
+        mock_check.assert_called_once()
+        mock_input.assert_not_called()  # No prompt for up-to-date
+        assert result is False
+
+    def test_update_check_handles_network_error(self, tmp_path: Path) -> None:
+        """Update check handles network errors gracefully."""
+        from ccp.wrapper import ClaudeWrapper
+
+        pipe_dir = tmp_path / "pipes"
+        wrapper = ClaudeWrapper(claude_args=[], pipe_dir=pipe_dir, skip_update_check=False)
+
+        with patch("ccp.updater.check_for_update") as mock_check:
+            mock_check.return_value = (None, "4.5.8", None)  # Network error
+            with patch("builtins.input") as mock_input:
+                result = wrapper._check_and_prompt_update()
+
+        mock_check.assert_called_once()
+        mock_input.assert_not_called()  # No prompt on network error
+        assert result is False
+
+    def test_update_accepted_downloads_and_runs_installer(self, tmp_path: Path) -> None:
+        """When user accepts update, downloads and runs installer."""
+        from io import StringIO
+
+        from ccp.wrapper import ClaudeWrapper
+
+        pipe_dir = tmp_path / "pipes"
+        wrapper = ClaudeWrapper(claude_args=[], pipe_dir=pipe_dir, skip_update_check=False)
+
+        with patch("ccp.updater.check_for_update") as mock_check:
+            mock_check.return_value = (True, "4.5.8", "4.6.0")
+            with patch("ccp.updater.download_installer") as mock_download:
+                mock_download.return_value = True
+                with patch("ccp.updater.run_installer") as mock_run:
+                    mock_run.return_value = True
+                    # Mock /dev/tty with "y" response to accept update
+                    mock_tty = MagicMock()
+                    mock_tty.__enter__ = MagicMock(return_value=StringIO("y\n"))
+                    mock_tty.__exit__ = MagicMock(return_value=False)
+                    with patch("builtins.open", return_value=mock_tty):
+                        result = wrapper._check_and_prompt_update()
+
+        mock_download.assert_called_once()
+        mock_run.assert_called_once()
+        assert result is True

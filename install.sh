@@ -53,42 +53,24 @@ install_homebrew() {
     echo "  [OK] Homebrew installed"
 }
 
-BREW_PACKAGES="git gh python@3.12 node@22 nvm pnpm bun uv"
+check_python() {
+    command -v python3 >/dev/null 2>&1
+}
 
-install_brew_packages() {
-    echo ""
-    echo "  Installing required packages via Homebrew..."
-    echo ""
-
-    # Tap bun repository (required for bun formula)
-    if ! brew tap | grep -q "oven-sh/bun"; then
-        echo "  [..] Adding bun tap..."
-        brew tap oven-sh/bun
-        echo "  [OK] bun tap added"
+install_python() {
+    echo "  [..] Installing Python via Homebrew..."
+    if ! brew install python@3.12; then
+        echo "  [!!] Failed to install Python"
+        exit 1
     fi
-
-    for pkg in $BREW_PACKAGES; do
-        if brew list "$pkg" >/dev/null 2>&1; then
-            echo "  [OK] $pkg already installed"
-        else
-            echo "  [..] Installing $pkg..."
-            if ! brew install "$pkg"; then
-                echo "  [!!] Failed to install $pkg"
-                echo "      Please try installing manually or use Dev Container instead."
-                exit 1
-            fi
-            echo "  [OK] $pkg installed"
-        fi
-    done
-    echo ""
-    echo "  [OK] All Homebrew packages installed"
+    echo "  [OK] Python installed"
 }
 
 confirm_local_install() {
     echo ""
     echo "  Local installation will:"
-    echo "    • Install Homebrew packages: python@3.12, node@22, nvm, pnpm, bun, uv, git, gh"
-    echo "    • Add PATH and 'ccp' alias to your shell config (~/.bashrc, ~/.zshrc, fish)"
+    echo "    • Install Homebrew packages: python, node, nvm, pnpm, bun, uv, git, gh"
+    echo "    • Add 'ccp' alias to your shell config (~/.bashrc, ~/.zshrc, fish)"
     echo "    • Configure Claude Code (~/.claude.json): theme, auto-compact off, MCP servers"
     echo ""
     confirm=""
@@ -150,6 +132,114 @@ setup_devcontainer() {
     exit 0
 }
 
+download_installer() {
+    local installer_dir=".claude/installer"
+
+    echo "  [..] Downloading installer..."
+
+    rm -rf "$installer_dir"
+    mkdir -p "$installer_dir/installer"
+
+    # Use GitHub API to list all files in installer directory
+    local api_url="https://api.github.com/repos/${REPO}/git/trees/v${VERSION}?recursive=true"
+    local tree_json=""
+
+    if command -v curl >/dev/null 2>&1; then
+        tree_json=$(curl -fsSL "$api_url" 2>/dev/null) || true
+    elif command -v wget >/dev/null 2>&1; then
+        tree_json=$(wget -qO- "$api_url" 2>/dev/null) || true
+    fi
+
+    if [ -z "$tree_json" ]; then
+        echo "  [!!] Failed to fetch file list from GitHub API"
+        exit 1
+    fi
+
+    # Extract installer/*.py files using grep/sed (POSIX compatible)
+    # Filter: starts with installer/, ends with .py, excludes __pycache__ and dist/build
+    echo "$tree_json" | grep -o '"path":"installer/[^"]*\.py"' | sed 's/"path":"//g; s/"$//g' | while IFS= read -r file_path; do
+        # Skip __pycache__, dist, build directories
+        case "$file_path" in
+            *__pycache__*|*dist/*|*build/*) continue ;;
+        esac
+
+        local dest_file="$installer_dir/$file_path"
+        mkdir -p "$(dirname "$dest_file")"
+        download_file "$file_path" "$dest_file"
+    done
+
+    echo "  [OK] Installer downloaded"
+}
+
+download_ccp_binary() {
+    local arch
+    arch="$(uname -m)"
+    case "$arch" in
+    x86_64 | amd64) arch="x86_64" ;;
+    arm64 | aarch64) arch="arm64" ;;
+    *)
+        echo "Error: Unsupported architecture: $arch"
+        echo "Supported: x86_64, arm64"
+        exit 1
+        ;;
+    esac
+
+    local os
+    os="$(uname -s)"
+    case "$os" in
+    Linux) os="linux" ;;
+    Darwin) os="darwin" ;;
+    *)
+        echo "Error: Unsupported operating system: $os"
+        echo "Supported: Linux, macOS (Darwin)"
+        exit 1
+        ;;
+    esac
+
+    local ccp_name="ccp-${os}-${arch}"
+    local ccp_url="https://github.com/${REPO}/releases/download/v${VERSION}/${ccp_name}"
+    local ccp_path=".claude/bin/ccp"
+
+    mkdir -p .claude/bin
+
+    if [ -f "$ccp_path" ]; then
+        if ! rm -f "$ccp_path" 2>/dev/null; then
+            echo "Error: Cannot update CCP binary - it may be in use."
+            echo ""
+            echo "Please quit Claude CodePro first (Ctrl+C or /exit), then run this installer again."
+            exit 1
+        fi
+    fi
+
+    echo "  [..] Downloading ccp binary..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$ccp_url" -o "$ccp_path"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q "$ccp_url" -O "$ccp_path"
+    else
+        echo "Error: Neither curl nor wget found. Please install one of them."
+        exit 1
+    fi
+    chmod +x "$ccp_path"
+
+    if [ "$(uname -s)" = "Darwin" ]; then
+        xattr -cr "$ccp_path" 2>/dev/null || true
+    fi
+
+    echo "  [OK] CCP binary downloaded"
+}
+
+run_python_installer() {
+    local installer_dir=".claude/installer"
+
+    echo ""
+    if [ "$LOCAL_INSTALL" = true ]; then
+        python3 -m installer install --local-system "$@"
+    else
+        python3 -m installer install "$@"
+    fi
+}
+
 if ! is_in_container; then
     echo ""
     echo "======================================================================"
@@ -196,7 +286,11 @@ if ! is_in_container; then
             install_homebrew
         fi
 
-        install_brew_packages
+        if check_python; then
+            echo "  [OK] Python already installed"
+        else
+            install_python
+        fi
         ;;
     *)
         setup_devcontainer
@@ -204,117 +298,14 @@ if ! is_in_container; then
     esac
 fi
 
-ARCH="$(uname -m)"
-case "$ARCH" in
-x86_64 | amd64) ARCH="x86_64" ;;
-arm64 | aarch64) ARCH="arm64" ;;
-*)
-    echo "Error: Unsupported architecture: $ARCH"
-    echo "Supported: x86_64, arm64"
-    exit 1
-    ;;
-esac
-
-OS="$(uname -s)"
-case "$OS" in
-Linux) PLATFORM="linux" ;;
-Darwin) PLATFORM="darwin" ;;
-*)
-    echo "Error: Unsupported operating system: $OS"
-    echo "Supported: Linux, macOS (Darwin)"
-    exit 1
-    ;;
-esac
-
-INSTALLER_NAME="ccp-installer-${PLATFORM}-${ARCH}"
-INSTALLER_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${INSTALLER_NAME}"
-INSTALLER_PATH=".claude/bin/ccp-installer"
-
-CCP_NAME="ccp-${PLATFORM}-${ARCH}"
-CCP_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${CCP_NAME}"
-CCP_PATH=".claude/bin/ccp"
-
+echo ""
 echo "Downloading Claude CodePro (v${VERSION})..."
-echo "  Platform: ${PLATFORM}-${ARCH}"
 echo ""
 
-mkdir -p .claude/bin
+download_ccp_binary
 
-if [ -f ".claude/bin/ccp" ]; then
-    if ! rm -f ".claude/bin/ccp" 2>/dev/null; then
-        echo "Error: Cannot update CCP binary - it may be in use."
-        echo ""
-        echo "Please quit Claude CodePro first (Ctrl+C or /exit), then run this installer again."
-        exit 1
-    fi
-fi
+download_installer
 
-echo "  [..] Downloading installer..."
-if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$INSTALLER_URL" -o "$INSTALLER_PATH"
-elif command -v wget >/dev/null 2>&1; then
-    wget -q "$INSTALLER_URL" -O "$INSTALLER_PATH"
-else
-    echo "Error: Neither curl nor wget found. Please install one of them."
-    exit 1
-fi
-chmod +x "$INSTALLER_PATH"
-# Remove macOS quarantine flag if on Darwin
-if [ "$(uname -s)" = "Darwin" ]; then
-    xattr -cr "$INSTALLER_PATH" 2>/dev/null || true
-fi
-echo "  [OK] Installer downloaded"
+export PYTHONPATH=".claude/installer:${PYTHONPATH:-}"
 
-echo "  [..] Downloading ccp binary..."
-if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$CCP_URL" -o "$CCP_PATH"
-elif command -v wget >/dev/null 2>&1; then
-    wget -q "$CCP_URL" -O "$CCP_PATH"
-else
-    echo "Error: Neither curl nor wget found. Please install one of them."
-    exit 1
-fi
-chmod +x "$CCP_PATH"
-# Remove macOS quarantine flag if on Darwin
-if [ "$(uname -s)" = "Darwin" ]; then
-    xattr -cr "$CCP_PATH" 2>/dev/null || true
-fi
-echo "  [OK] CCP binary downloaded"
-echo ""
-
-# Run installer with error handling for macOS Gatekeeper
-set +e  # Temporarily disable exit on error
-if [ "$LOCAL_INSTALL" = true ]; then
-    "$INSTALLER_PATH" install --local-system "$@"
-else
-    "$INSTALLER_PATH" install "$@"
-fi
-EXIT_CODE=$?
-set -e
-
-if [ $EXIT_CODE -ne 0 ]; then
-    # Check if killed by signal (137 = 128 + 9 = SIGKILL)
-    if [ $EXIT_CODE -eq 137 ] || [ $EXIT_CODE -eq 9 ]; then
-        echo ""
-        echo "  ╭─────────────────────────────────────────────────────────────╮"
-        echo "  │  macOS Security Blocked the Installer                       │"
-        echo "  ╰─────────────────────────────────────────────────────────────╯"
-        echo ""
-        echo "  macOS Gatekeeper blocked the unsigned installer binary."
-        echo ""
-        echo "  To fix this, run these commands:"
-        echo ""
-        echo "    sudo xattr -rd com.apple.quarantine $INSTALLER_PATH"
-        echo "    $INSTALLER_PATH install --local-system"
-        echo ""
-        echo "  Or allow it in System Settings:"
-        echo "    1. Open System Settings → Privacy & Security"
-        echo "    2. Scroll down to find the blocked app message"
-        echo "    3. Click 'Allow Anyway'"
-        echo "    4. Re-run this installer"
-        echo ""
-        exit 1
-    else
-        exit $EXIT_CODE
-    fi
-fi
+run_python_installer "$@"

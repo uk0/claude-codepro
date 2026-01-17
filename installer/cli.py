@@ -23,6 +23,7 @@ from installer.steps.dependencies import DependenciesStep
 from installer.steps.environment import EnvironmentStep
 from installer.steps.finalize import FinalizeStep
 from installer.steps.git_setup import GitSetupStep
+from installer.steps.prerequisites import PrerequisitesStep
 from installer.steps.shell_config import ShellConfigStep
 from installer.steps.vscode_extensions import VSCodeExtensionsStep
 from installer.ui import Console
@@ -38,6 +39,7 @@ def get_all_steps() -> list[BaseStep]:
     """Get all installation steps in order."""
     return [
         BootstrapStep(),
+        PrerequisitesStep(),
         GitSetupStep(),
         ClaudeFilesStep(),
         ConfigFilesStep(),

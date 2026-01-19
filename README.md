@@ -60,6 +60,8 @@ Choose your installation method:
 - **macOS or Linux** - Homebrew-compatible system
 - **Homebrew** - Installed automatically if not present
 
+**Claude Subscription:** Claude Max 5x/20x or Enterprise recommended for best experience.
+
 ### Installation
 
 Run the following command in your **project folder root**:
@@ -69,31 +71,6 @@ curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/v4.5.25/in
 ```
 
 You'll be asked to choose between **Dev Container** or **Local Installation**.
-
-#### Dev Container Installation
-
-1. Choose "Dev Container" when prompted
-2. Reopen in Container: `Cmd+Shift+P` → "Dev Containers: Reopen in Container"
-3. Dev Container installation completes automatically inside the container
-4. Run the installation command again in the container terminal to finish CCP setup
-5. Follow the post-setup instructions and run `ccp` to start Claude CodePro
-
-#### Local Installation (macOS/Linux)
-
-1. Choose "Local Installation" when prompted
-2. Confirm the installation (Homebrew packages, shell config, Claude Code config)
-3. Wait for installation to finish then follow the post-setup instructions
-4. Reload your shell: `source ~/.zshrc` (or `~/.bashrc`)
-5. Run `ccp` to start Claude CodePro
-
-### Claude Subscription
-
-Claude CodePro is designed to be token-efficient, but quality has its cost. For the best experience, use:
-
-- **Claude Max 5x** — For individual developers with moderate usage
-- **Claude Max 20x** — For heavy usage or professional development
-- **Enterprise Plan** — For teams and organizations
-
 
 ---
 
@@ -245,5 +222,3 @@ This project is dual-licensed. See the [LICENSE](LICENSE) file for details.
 **Free (AGPL-3.0)** - Personal use, students, educators, nonprofits, and open source projects.
 
 **Commercial License** - For proprietary or closed-source projects, [purchase a license](https://license.claude-code.pro).
-
-

@@ -92,3 +92,65 @@ def test_install_sh_installs_dependencies():
 
     assert "install_dependencies" in content, "Must have install_dependencies function"
     assert "uv pip install" in content, "Must use uv pip install for dependencies"
+
+
+def test_install_sh_has_get_saved_install_mode():
+    """Verify install.sh can read saved install mode preference."""
+    install_sh = Path(__file__).parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    # Must have get_saved_install_mode function
+    assert "get_saved_install_mode()" in content, "Must have get_saved_install_mode function"
+
+    # Must read from config file
+    assert "ccp-config.json" in content, "Must read from ccp-config.json"
+    assert '"install_mode"' in content, "Must read install_mode field"
+
+    # Must handle case when file doesn't exist (check for -f)
+    assert '[ -f "$config_file" ]' in content, "Must check if config file exists"
+
+
+def test_install_sh_has_save_install_mode():
+    """Verify install.sh can save install mode preference."""
+    install_sh = Path(__file__).parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    # Must have save_install_mode function
+    assert "save_install_mode()" in content, "Must have save_install_mode function"
+
+    # Must create directory if needed
+    assert 'mkdir -p "$(dirname "$config_file")"' in content, "Must create config directory"
+
+    # Must handle both new file and update existing
+    assert "echo " in content and "ccp-config.json" in content, "Must write to config file"
+
+
+def test_install_sh_uses_saved_preference():
+    """Verify install.sh checks for and uses saved install mode preference."""
+    install_sh = Path(__file__).parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    # Must call get_saved_install_mode
+    assert "saved_mode=$(get_saved_install_mode)" in content, "Must get saved mode"
+
+    # Must check for both local and container modes
+    assert 'saved_mode" = "local"' in content, "Must check for local mode"
+    assert 'saved_mode" = "container"' in content, "Must check for container mode"
+
+    # Must indicate saved preference to user
+    assert "Using saved preference" in content, "Must inform user about saved preference"
+
+
+def test_install_sh_saves_user_choice():
+    """Verify install.sh saves user's install mode choice."""
+    install_sh = Path(__file__).parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    # Must save local choice
+    assert 'save_install_mode "local"' in content, "Must save local mode choice"
+
+    # Must save container choice
+    assert 'save_install_mode "container"' in content, "Must save container mode choice"
+
+    # Must indicate preference was saved
+    assert "preference saved" in content, "Must indicate preference was saved"

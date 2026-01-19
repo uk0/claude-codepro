@@ -6,10 +6,33 @@ VERSION="4.5.25"
 
 REPO="maxritter/claude-codepro"
 REPO_RAW="https://raw.githubusercontent.com/${REPO}/v${VERSION}"
-LOCAL_INSTALL=false
 
 is_in_container() {
     [ -f "/.dockerenv" ] || [ -f "/run/.containerenv" ]
+}
+
+get_saved_install_mode() {
+    local config_file=".claude/config/ccp-config.json"
+    if [ -f "$config_file" ]; then
+        sed -n 's/.*"install_mode"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file" 2>/dev/null
+    fi
+}
+
+save_install_mode() {
+    local mode="$1"
+    local config_file=".claude/config/ccp-config.json"
+    mkdir -p "$(dirname "$config_file")"
+    if [ -f "$config_file" ]; then
+        if grep -q '"install_mode"' "$config_file"; then
+            sed -i.bak "s/\"install_mode\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"install_mode\": \"$mode\"/" "$config_file"
+        else
+            sed -i.bak 's/^{$/{\
+  "install_mode": "'"$mode"'",/' "$config_file"
+        fi
+        rm -f "${config_file}.bak"
+    else
+        echo "{\"install_mode\": \"$mode\"}" >"$config_file"
+    fi
 }
 
 download_file() {
@@ -169,11 +192,13 @@ install_dependencies() {
 
 run_installer() {
     local installer_dir=".claude/installer"
+    local saved_mode
+    saved_mode=$(get_saved_install_mode)
 
     echo ""
     export PYTHONPATH="$installer_dir:${PYTHONPATH:-}"
 
-    if [ "$LOCAL_INSTALL" = true ]; then
+    if ! is_in_container && [ "$saved_mode" = "local" ]; then
         uv run python -m installer install --local-system "$@"
     else
         uv run python -m installer install "$@"
@@ -193,36 +218,48 @@ if ! is_in_container; then
         setup_devcontainer
     fi
 
-    echo "  Choose installation method:"
-    echo ""
-    echo "    1) Dev Container - Isolated, consistent environment (RECOMMENDED)"
-    echo "    2) Local - Install directly on your system (ONLY macOS/Linux)"
-    echo ""
-
-    choice=""
-    if [ -t 0 ]; then
-        printf "  Enter choice [1-2]: "
-        read -r choice
-    elif [ -e /dev/tty ]; then
-        printf "  Enter choice [1-2]: "
-        read -r choice </dev/tty
-    else
-        echo "  No interactive terminal available, defaulting to Dev Container."
-        choice="1"
-    fi
-
-    case $choice in
-    2)
-        LOCAL_INSTALL=true
-        echo ""
-        echo "  Local Installation selected"
+    saved_mode=$(get_saved_install_mode)
+    if [ "$saved_mode" = "local" ]; then
+        echo "  Using saved preference: Local Installation"
         echo ""
         confirm_local_install
-        ;;
-    *)
+    elif [ "$saved_mode" = "container" ]; then
+        echo "  Using saved preference: Dev Container"
+        echo ""
         setup_devcontainer
-        ;;
-    esac
+    else
+        echo "  Choose installation method:"
+        echo ""
+        echo "    1) Dev Container - Isolated, consistent environment (RECOMMENDED)"
+        echo "    2) Local - Install directly on your system (ONLY macOS/Linux)"
+        echo ""
+
+        choice=""
+        if [ -t 0 ]; then
+            printf "  Enter choice [1-2]: "
+            read -r choice
+        elif [ -e /dev/tty ]; then
+            printf "  Enter choice [1-2]: "
+            read -r choice </dev/tty
+        else
+            echo "  No interactive terminal available, defaulting to Dev Container."
+            choice="1"
+        fi
+
+        case $choice in
+        2)
+            save_install_mode "local"
+            echo ""
+            echo "  Local Installation selected (preference saved)"
+            echo ""
+            confirm_local_install
+            ;;
+        *)
+            save_install_mode "container"
+            setup_devcontainer
+            ;;
+        esac
+    fi
 fi
 
 echo ""

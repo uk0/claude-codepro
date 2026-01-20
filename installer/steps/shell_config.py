@@ -20,42 +20,59 @@ BUN_PATH_MARKER = "# bun PATH"
 
 
 def get_alias_line(shell_type: str) -> str:
-    """Get the alias line for the given shell type.
+    """Get the function/alias line for the given shell type.
 
-    Creates an alias that:
+    Creates a function that:
     1. If current dir is CCP project (.claude/bin/ccp exists) → use it
     2. If in devcontainer (/workspaces exists) → find CCP project there
     3. Otherwise → show error
 
-    The alias runs the ccp binary from the project's .claude/bin/ directory.
+    Uses a function (not alias) to properly forward arguments like 'ccp activate KEY'.
     """
     if shell_type == "fish":
         return (
             f"{CCP_ALIAS_MARKER}\n"
-            "alias ccp='"
-            "if test -f .claude/bin/ccp; "
-            ".claude/bin/ccp; "
-            "else if test -d /workspaces; "
-            'set ccp_dir ""; for d in /workspaces/*/; test -f "$d.claude/bin/ccp"; and set ccp_dir "$d"; and break; end; '
-            'if test -n "$ccp_dir"; cd "$ccp_dir"; and .claude/bin/ccp; '
-            'else; echo "Error: No CCP project found in /workspaces"; end; '
-            "else; "
-            'echo "Error: Not a Claude CodePro project. Run the installer first or cd to a CCP-enabled project."; '
-            "end'"
+            "function ccp\n"
+            "    if test -f .claude/bin/ccp\n"
+            "        .claude/bin/ccp $argv\n"
+            "    else if test -d /workspaces\n"
+            '        set ccp_dir ""\n'
+            "        for d in /workspaces/*/\n"
+            '            if test -f "$d.claude/bin/ccp"\n'
+            '                set ccp_dir "$d"\n'
+            "                break\n"
+            "            end\n"
+            "        end\n"
+            '        if test -n "$ccp_dir"\n'
+            '            cd "$ccp_dir" && .claude/bin/ccp $argv\n'
+            "        else\n"
+            '            echo "Error: No CCP project found in /workspaces"\n'
+            "        end\n"
+            "    else\n"
+            '        echo "Error: Not a Claude CodePro project. Run the installer first or cd to a CCP-enabled project."\n'
+            "    end\n"
+            "end"
         )
     else:
         return (
             f"{CCP_ALIAS_MARKER}\n"
-            "alias ccp='"
-            "if [ -f .claude/bin/ccp ]; then "
-            ".claude/bin/ccp; "
-            "elif [ -d /workspaces ]; then "
-            'ccp_dir=""; for d in /workspaces/*/; do [ -f "$d.claude/bin/ccp" ] && ccp_dir="$d" && break; done; '
-            'if [ -n "$ccp_dir" ]; then cd "$ccp_dir" && .claude/bin/ccp; '
-            'else echo "Error: No CCP project found in /workspaces"; fi; '
-            "else "
-            'echo "Error: Not a Claude CodePro project. Run the installer first or cd to a CCP-enabled project."; '
-            "fi'"
+            "ccp() {\n"
+            "    if [ -f .claude/bin/ccp ]; then\n"
+            '        .claude/bin/ccp "$@"\n'
+            "    elif [ -d /workspaces ]; then\n"
+            '        ccp_dir=""\n'
+            "        for d in /workspaces/*/; do\n"
+            '            [ -f "$d.claude/bin/ccp" ] && ccp_dir="$d" && break\n'
+            "        done\n"
+            '        if [ -n "$ccp_dir" ]; then\n'
+            '            cd "$ccp_dir" && .claude/bin/ccp "$@"\n'
+            "        else\n"
+            '            echo "Error: No CCP project found in /workspaces"\n'
+            "        fi\n"
+            "    else\n"
+            '        echo "Error: Not a Claude CodePro project. Run the installer first or cd to a CCP-enabled project."\n'
+            "    fi\n"
+            "}"
         )
 
 

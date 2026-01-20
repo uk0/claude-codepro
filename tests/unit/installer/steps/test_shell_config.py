@@ -57,7 +57,7 @@ class TestShellConfigStep:
 
             content = bashrc.read_text()
             assert CCP_ALIAS_MARKER in content
-            assert "alias ccp" in content
+            assert "ccp()" in content  # Function, not alias
 
     @patch("installer.steps.shell_config.get_shell_config_files")
     def test_shell_config_updates_old_alias(self, mock_get_files):
@@ -96,18 +96,20 @@ class TestAliasHelpers:
         assert isinstance(result, str)
         assert len(result) > 0
 
-    def test_get_alias_line_bash_contains_alias(self):
-        """Bash alias line uses alias ccp."""
+    def test_get_alias_line_bash_contains_function(self):
+        """Bash alias line uses ccp() function."""
         result = get_alias_line("bash")
-        assert "alias ccp=" in result
+        assert "ccp()" in result
         assert ".claude/bin/ccp" in result
+        assert '"$@"' in result  # Arguments forwarding
 
     def test_get_alias_line_fish_uses_fish_syntax(self):
-        """Fish alias line uses fish syntax."""
+        """Fish alias line uses fish function syntax."""
         result = get_alias_line("fish")
-        assert "alias ccp=" in result
+        assert "function ccp" in result
         assert ".claude/bin/ccp" in result
         assert "test -f" in result
+        assert "$argv" in result  # Fish arguments forwarding
 
     def test_get_alias_line_handles_devcontainer(self):
         """Alias line includes /workspaces fallback for devcontainers."""

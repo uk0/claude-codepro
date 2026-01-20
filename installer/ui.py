@@ -175,21 +175,7 @@ class Console:
                 license_text.append(" — Subscribe: ", style="dim white")
                 license_text.append("https://license.claude-code.pro", style="cyan")
             self._console.print(license_text)
-        else:
-            license_text = Text()
-            license_text.append("  📜 ", style="yellow")
-            license_text.append("7-day free trial", style="bold green")
-            license_text.append(" included. ", style="dim white")
-            license_text.append("Then ", style="dim white")
-            license_text.append("Standard", style="green")
-            license_text.append(" or ", style="dim white")
-            license_text.append("Enterprise", style="green")
-            license_text.append(" plan.\n", style="dim white")
-            license_text.append("     ", style="white")
-            license_text.append("Pricing: ", style="dim white")
-            license_text.append("https://license.claude-code.pro", style="cyan")
-            self._console.print(license_text)
-        self._console.print()
+            self._console.print()
 
     def set_total_steps(self, total: int) -> None:
         """Set total number of installation steps."""

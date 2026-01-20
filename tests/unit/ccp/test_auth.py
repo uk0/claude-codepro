@@ -325,9 +325,29 @@ class TestCreateEvalState:
         assert state is not None
         assert state.tier == "trial"
 
-    def test_trial_already_used_raises_error(self, tmp_path):
-        """Creating trial when already used raises TrialAlreadyUsedError."""
-        mark_trial_used(config_dir=tmp_path)
+    def test_trial_reactivation_within_window_succeeds(self, tmp_path):
+        """Reactivating trial within 7-day window succeeds with original expiry."""
+        # Create initial trial
+        state1 = create_eval_state(config_dir=tmp_path)
+        original_expires = state1.expires_at
+
+        # Delete license file (simulating deactivation)
+        license_file = tmp_path / ".license"
+        license_file.unlink()
+
+        # Reactivate - should work and keep original expiry
+        state2 = create_eval_state(config_dir=tmp_path)
+        assert state2.tier == "trial"
+        assert state2.expires_at == original_expires
+
+    def test_trial_expired_window_raises_error(self, tmp_path):
+        """Creating trial after 7-day window expired raises TrialAlreadyUsedError."""
+        from datetime import timedelta
+
+        # Create trial_used file with expired dates
+        expired_created = datetime.now(timezone.utc) - timedelta(days=10)
+        expired_expires = expired_created + timedelta(days=7)
+        mark_trial_used(config_dir=tmp_path, created_at=expired_created, expires_at=expired_expires)
 
         with pytest.raises(TrialAlreadyUsedError):
             create_eval_state(config_dir=tmp_path)

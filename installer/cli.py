@@ -185,8 +185,13 @@ def _check_trial_used(
     project_dir: Path,
     local_mode: bool,
     local_repo_dir: Path | None,
-) -> bool | None:
-    """Check if trial has been used via ccp binary. Returns None if check fails."""
+) -> tuple[bool | None, bool]:
+    """Check if trial has been used via ccp binary.
+
+    Returns (trial_used, can_reactivate):
+    - trial_used: True if trial was used, False if not, None if check failed
+    - can_reactivate: True if within 7-day window and can reactivate
+    """
     bin_path = project_dir / ".claude" / "bin" / "ccp"
     if not bin_path.exists() and local_mode and local_repo_dir:
         local_bin = local_repo_dir / ".claude" / "bin" / "ccp"
@@ -194,7 +199,7 @@ def _check_trial_used(
             bin_path = local_bin
 
     if not bin_path.exists():
-        return None
+        return None, False
 
     try:
         result = subprocess.run(
@@ -206,10 +211,12 @@ def _check_trial_used(
         output = result.stdout.strip() or result.stderr.strip()
         if output:
             data = json.loads(output)
-            return data.get("trial_used", False)
+            trial_used = data.get("trial_used", False)
+            can_reactivate = data.get("can_reactivate", False)
+            return trial_used, can_reactivate
     except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError):
         pass
-    return None
+    return None, False
 
 
 def _get_license_info(
@@ -379,12 +386,12 @@ def install(
         console.print()
 
         with console.spinner("Checking trial eligibility..."):
-            trial_used = _check_trial_used(project_dir, local, effective_local_repo_dir)
+            trial_used, can_reactivate = _check_trial_used(project_dir, local, effective_local_repo_dir)
         if trial_used is None:
             trial_used = False
 
-        if trial_used:
-            console.print("  [bold yellow]Trial already used on this machine.[/bold yellow]")
+        if trial_used and not can_reactivate:
+            console.print("  [bold yellow]Trial has expired on this machine.[/bold yellow]")
             console.print("  Please enter a license key to continue.")
             console.print()
 
@@ -412,48 +419,14 @@ def install(
                 console.print()
                 raise typer.Exit(1)
         else:
-            license_choices = [
-                "Start 7-day free trial",
-                "I have a license key",
-            ]
-            choice = console.select("How would you like to proceed?", license_choices)
-
-            if choice == license_choices[1]:
+            started = _start_trial(console, project_dir, local, effective_local_repo_dir)
+            if started:
                 console.print()
-                for attempt in range(3):
-                    license_key = console.input("Enter your license key").strip()
-                    if not license_key:
-                        console.error("License key is required")
-                        if attempt < 2:
-                            console.print("  [dim]Please try again.[/dim]")
-                        continue
-
-                    validated = _validate_license_key(
-                        console, project_dir, license_key, local, effective_local_repo_dir
-                    )
-                    if validated:
-                        break
-                    else:
-                        if attempt < 2:
-                            console.print()
-                            console.print("  [dim]Please check your license key and try again.[/dim]")
-                            console.print("  [dim]Subscribe: https://license.claude-code.pro[/dim]")
-                            console.print()
-                else:
-                    console.print()
-                    console.error("License validation failed after 3 attempts.")
-                    console.print("  [bold]Subscribe at:[/bold] [cyan]https://license.claude-code.pro[/cyan]")
-                    console.print()
-                    raise typer.Exit(1)
-            else:
-                started = _start_trial(console, project_dir, local, effective_local_repo_dir)
-                if started:
-                    console.print()
-                    console.success("Your 7-day trial has started!")
-                    console.print("  All features are unlocked for 7 days.")
-                    console.print()
-                    console.print("  [bold]Subscribe after trial:[/bold] [cyan]https://license.claude-code.pro[/cyan]")
-                    console.print()
+                console.success("Your 7-day trial has started!")
+                console.print("  All features are unlocked for 7 days.")
+                console.print()
+                console.print("  [bold]Subscribe after trial:[/bold] [cyan]https://license.claude-code.pro[/cyan]")
+                console.print()
 
     claude_dir = Path.cwd() / ".claude"
     if claude_dir.exists() and not skip_prompts:

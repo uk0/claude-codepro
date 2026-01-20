@@ -9,6 +9,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
+from ccp.auth import TrialAlreadyUsedError
+
 runner = CliRunner()
 
 
@@ -262,7 +264,9 @@ class TestCLITrial:
         """trial --check returns trial_used status."""
         from ccp.cli import app
 
-        with patch("ccp.auth.has_used_trial", return_value=False):
+        with patch("ccp.cli.has_used_trial", return_value=False), patch(
+            "ccp.cli.is_trial_window_active", return_value=False
+        ):
             result = runner.invoke(app, ["trial", "--check"])
 
         assert result.exit_code == 0
@@ -272,18 +276,35 @@ class TestCLITrial:
         """trial --check --json outputs JSON format."""
         from ccp.cli import app
 
-        with patch("ccp.auth.has_used_trial", return_value=True):
+        with patch("ccp.cli.has_used_trial", return_value=True), patch(
+            "ccp.cli.is_trial_window_active", return_value=False
+        ):
             result = runner.invoke(app, ["trial", "--check", "--json"])
 
         assert result.exit_code == 0
         data = json.loads(result.stdout)
         assert data["trial_used"] is True
+        assert data["can_reactivate"] is False
+
+    def test_trial_check_can_reactivate(self) -> None:
+        """trial --check shows can_reactivate when within window."""
+        from ccp.cli import app
+
+        with patch("ccp.cli.has_used_trial", return_value=True), patch(
+            "ccp.cli.is_trial_window_active", return_value=True
+        ):
+            result = runner.invoke(app, ["trial", "--check", "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.stdout)
+        assert data["trial_used"] is True
+        assert data["can_reactivate"] is True
 
     def test_trial_start_success(self) -> None:
         """trial --start starts a new trial."""
         from ccp.cli import app
 
-        with patch("ccp.auth.create_trial_state"):
+        with patch("ccp.cli.create_trial_state"):
             result = runner.invoke(app, ["trial", "--start"])
 
         assert result.exit_code == 0
@@ -293,7 +314,7 @@ class TestCLITrial:
         """trial --start --json outputs JSON on success."""
         from ccp.cli import app
 
-        with patch("ccp.auth.create_trial_state"):
+        with patch("ccp.cli.create_trial_state"):
             result = runner.invoke(app, ["trial", "--start", "--json"])
 
         assert result.exit_code == 0
@@ -301,11 +322,10 @@ class TestCLITrial:
         assert data["success"] is True
 
     def test_trial_start_already_used(self) -> None:
-        """trial --start fails when trial already used."""
-        from ccp.auth import TrialAlreadyUsedError
+        """trial --start fails when trial window expired."""
         from ccp.cli import app
 
-        with patch("ccp.auth.create_trial_state", side_effect=TrialAlreadyUsedError()):
+        with patch("ccp.cli.create_trial_state", side_effect=TrialAlreadyUsedError()):
             result = runner.invoke(app, ["trial", "--start", "--json"])
 
         assert result.exit_code == 1

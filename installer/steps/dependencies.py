@@ -360,11 +360,20 @@ def install_pyright_lsp() -> bool:
 
 
 def install_gopls_lsp() -> bool:
-    """Install gopls language server via go install."""
+    """Install gopls language server and plugin via go install and claude plugin."""
     if not command_exists("go"):
         return False
 
-    return _run_bash_with_retry("go install golang.org/x/tools/gopls@latest")
+    if _is_plugin_installed("gopls-lsp", "claude-plugins-official"):
+        return True
+
+    if not _run_bash_with_retry("go install golang.org/x/tools/gopls@latest"):
+        return False
+
+    if not _ensure_official_marketplace():
+        return False
+
+    return _run_bash_with_retry("claude plugin install gopls-lsp")
 
 
 def _configure_claude_mem_defaults() -> bool:

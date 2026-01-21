@@ -106,7 +106,7 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 
 - **Auditor Agent** - Background AI that monitors rule compliance and surfaces violations in real-time
 - **TDD Enforcer** - Pre-edit hook that warns when modifying code without failing tests first
-- **Quality Hooks** - Python (ruff, basedpyright), TypeScript (eslint, tsc), Go (gofmt, go vet) and QLTY
+- **Quality Hooks** - Specific hooks for Python, TypeScript and Go, all other languages via qlty
 - **Status Line** - Live display of context usage, memory status, auditor state, and license info
 
 ### 🛠️ One-Command Installer

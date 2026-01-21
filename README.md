@@ -204,16 +204,11 @@ Claude CodePro uses [Claude Code's modular rules](https://code.claude.com/docs/e
 
 > **Try free for 7 days** — No signup, no credit card. Just install and go.
 
-After your trial, choose the tier that fits your needs:
+After your trial, choose the tier that fits your needs [here](https://license.claude-code.pro):
 
 | Tier | Includes |
 |:-----|:---------|
 | **Standard** | All features, updates, GitHub support |
 | **Enterprise** | Standard + dedicated email support, training |
 
-<p align="center">
-  <a href="https://license.claude-code.pro"><strong>Purchase a license →</strong></a>
-</p>
-
 See the [LICENSE](LICENSE) file for full terms.
-

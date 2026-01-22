@@ -5,13 +5,11 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from installer.context import InstallContext
 from installer.downloads import DownloadConfig, download_file, get_repo_files
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 SETTINGS_FILE = "settings.local.json"
 PYTHON_CHECKER_HOOK = "uv run python .claude/hooks/file_checker_python.py"

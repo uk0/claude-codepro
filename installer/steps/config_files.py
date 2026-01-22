@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from installer.context import InstallContext
 from installer.downloads import DownloadConfig, download_directory
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 
 class ConfigFilesStep(BaseStep):

@@ -7,13 +7,11 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from installer.context import InstallContext
 from installer.platform_utils import command_exists
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2

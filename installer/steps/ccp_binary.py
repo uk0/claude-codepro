@@ -7,14 +7,12 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 
+from installer.context import InstallContext
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 try:
     from installer import __version__ as INSTALLER_VERSION
@@ -132,7 +130,7 @@ def _download_ccp_artifacts(version: str, bin_dir: Path) -> bool:
 
     base_url = f"https://github.com/{GITHUB_REPO}/releases/download/v{version}"
 
-    so_url = f"{base_url}/cli-{platform_suffix}.so"
+    so_url = f"{base_url}/ccp-{platform_suffix}.so"
     local_so_name = _get_local_so_name()
     so_path = bin_dir / local_so_name
 

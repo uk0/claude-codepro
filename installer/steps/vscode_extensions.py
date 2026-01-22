@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
 
+from installer.context import InstallContext
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 IDE_CLI_COMMANDS = [
     "antigravity",

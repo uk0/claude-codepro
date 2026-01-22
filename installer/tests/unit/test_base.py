@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-if TYPE_CHECKING:
-    from installer.context import InstallContext
+from installer.context import InstallContext
 
 
 class TestStepProtocol:

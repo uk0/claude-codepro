@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from typing import ClassVar, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from installer.context import InstallContext
+from installer.context import InstallContext
 
 
 @runtime_checkable

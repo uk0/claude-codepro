@@ -169,7 +169,7 @@ class TestDownloadCcpArtifacts:
         assert mock_download.call_count == 2
         # First call: .so module
         so_call = mock_download.call_args_list[0]
-        assert "cli-linux-x86_64.so" in so_call[0][0]
+        assert "ccp-linux-x86_64.so" in so_call[0][0]
         assert so_call[0][1] == tmp_path / "cli.cpython-312-x86_64-linux-gnu.so"
         # Second call: wrapper
         wrapper_call = mock_download.call_args_list[1]

@@ -5,13 +5,10 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from installer.context import InstallContext
 from installer.platform_utils import command_exists, is_homebrew_available, is_in_devcontainer
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 HOMEBREW_PACKAGES = [
     "git",

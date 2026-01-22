@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from installer.ui import Console
+from installer.ui import Console
 
 
 @dataclass

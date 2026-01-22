@@ -5,12 +5,9 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from installer.context import InstallContext
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 
 def is_git_initialized(project_dir: Path) -> bool:

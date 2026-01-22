@@ -164,7 +164,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "v${{ steps.version.outputs.version }}" \
-            ccp/dist/cli-linux-x86_64.so \
+            ccp/dist/ccp-linux-x86_64.so \
             ccp/dist/ccp-wrapper --clobber
 
   build-ccp-arm64:
@@ -221,7 +221,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "v${{ steps.version.outputs.version }}" \
-            ccp/dist/cli-linux-arm64.so --clobber
+            ccp/dist/ccp-linux-arm64.so --clobber
 
   build-ccp-darwin-x86:
     name: Build CCP Darwin x86_64
@@ -282,7 +282,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "v${{ steps.version.outputs.version }}" \
-            ccp/dist/cli-darwin-x86_64.so --clobber
+            ccp/dist/ccp-darwin-x86_64.so --clobber
 
   build-ccp-darwin-arm64:
     name: Build CCP Darwin arm64
@@ -343,7 +343,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "v${{ steps.version.outputs.version }}" \
-            ccp/dist/cli-darwin-arm64.so --clobber
+            ccp/dist/ccp-darwin-arm64.so --clobber
 
   upload-wrapper:
     name: Upload CCP Wrapper Script
@@ -367,6 +367,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: v${{ steps.version.outputs.version }}
+
+      - name: Install git-crypt
+        run: sudo apt-get update && sudo apt-get install -y git-crypt
+
+      - name: Unlock repository
+        env:
+          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
+        run: bash .github/workflows/scripts/setup-git-crypt.sh
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v6

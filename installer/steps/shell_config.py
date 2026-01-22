@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from installer.context import InstallContext
 from installer.platform_utils import get_shell_config_files, is_in_devcontainer
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 CCP_ALIAS_MARKER = "# Claude CodePro alias"
 FZF_MARKER = "source <(fzf --zsh)"

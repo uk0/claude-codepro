@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from installer import __version__
+from installer.context import InstallContext
 from installer.steps.base import BaseStep
-
-if TYPE_CHECKING:
-    from installer.context import InstallContext
 
 
 class FinalizeStep(BaseStep):

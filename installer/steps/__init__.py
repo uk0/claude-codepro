@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from .base import Step
 
-if TYPE_CHECKING:
-    from .base import Step
-
-# Registry of all available steps, populated by step modules
 STEP_REGISTRY: dict[str, type[Step]] = {}
 
 

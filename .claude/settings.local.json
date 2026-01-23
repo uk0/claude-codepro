@@ -99,7 +99,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": ".claude/bin/ccp statusline",
+    "command": "/workspaces/claude-codepro/.claude/bin/ccp statusline",
     "padding": 0
   },
   "outputStyle": "default",

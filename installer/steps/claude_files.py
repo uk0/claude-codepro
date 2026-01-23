@@ -16,21 +16,27 @@ PYTHON_CHECKER_HOOK = "uv run python .claude/hooks/file_checker_python.py"
 TYPESCRIPT_CHECKER_HOOK = "uv run python .claude/hooks/file_checker_ts.py"
 GOLANG_CHECKER_HOOK = "uv run python .claude/hooks/file_checker_go.py"
 HOOKS_PATH_PATTERN = ".claude/hooks/"
-SOURCE_REPO_PATH = "/workspaces/claude-codepro/.claude/hooks/"
+BIN_PATH_PATTERN = ".claude/bin/"
+SOURCE_REPO_HOOKS_PATH = "/workspaces/claude-codepro/.claude/hooks/"
+SOURCE_REPO_BIN_PATH = "/workspaces/claude-codepro/.claude/bin/"
 
 
-def patch_hook_paths(content: str, project_dir: Path) -> str:
-    """Patch hook paths to use absolute paths for the target project.
+def patch_claude_paths(content: str, project_dir: Path) -> str:
+    """Patch .claude paths to use absolute paths for the target project.
 
-    Handles both relative paths (.claude/hooks/) and existing absolute paths
-    from the source repo (/workspaces/claude-codepro/.claude/hooks/).
+    Handles both relative paths (.claude/hooks/, .claude/bin/) and existing
+    absolute paths from the source repo (/workspaces/claude-codepro/.claude/).
     """
     abs_hooks_path = str(project_dir / ".claude" / "hooks") + "/"
+    abs_bin_path = str(project_dir / ".claude" / "bin") + "/"
 
-    content = content.replace(SOURCE_REPO_PATH, abs_hooks_path)
+    content = content.replace(SOURCE_REPO_HOOKS_PATH, abs_hooks_path)
+    content = content.replace(SOURCE_REPO_BIN_PATH, abs_bin_path)
 
     content = content.replace(" " + HOOKS_PATH_PATTERN, " " + abs_hooks_path)
     content = content.replace('"' + HOOKS_PATH_PATTERN, '"' + abs_hooks_path)
+    content = content.replace(" " + BIN_PATH_PATTERN, " " + abs_bin_path)
+    content = content.replace('"' + BIN_PATH_PATTERN, '"' + abs_bin_path)
 
     return content
 
@@ -354,7 +360,7 @@ class ClaudeFilesStep(BaseStep):
                 processed_content = process_settings(
                     settings_content, install_python, install_typescript, install_golang
                 )
-                processed_content = patch_hook_paths(processed_content, project_dir)
+                processed_content = patch_claude_paths(processed_content, project_dir)
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 dest_path.write_text(processed_content)
                 return True

@@ -286,9 +286,9 @@ jobs:
         run: |
           echo "Cleaning up old dev pre-releases (keeping 5 most recent)..."
 
+          # Sort by created_at descending, then take all but the 5 newest
           gh api repos/${{ github.repository }}/releases \
-            --jq '.[] | select(.prerelease and (.tag_name | startswith("dev-"))) | .tag_name' \
-            | tail -n +6 \
+            --jq '[.[] | select(.prerelease and (.tag_name | startswith("dev-")))] | sort_by(.created_at) | reverse | .[5:] | .[].tag_name' \
             | while read -r tag; do
                 if [ -n "$tag" ]; then
                   echo "Deleting old pre-release: $tag"

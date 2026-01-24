@@ -238,7 +238,13 @@ download_installer() {
 	rm -rf "$installer_dir"
 	mkdir -p "$installer_dir/installer"
 
-	local api_url="https://api.github.com/repos/${REPO}/git/trees/v${VERSION}?recursive=true"
+	# Dev versions don't have 'v' prefix
+	local tag_ref=""
+	case "$VERSION" in
+	dev-*) tag_ref="$VERSION" ;;
+	*) tag_ref="v${VERSION}" ;;
+	esac
+	local api_url="https://api.github.com/repos/${REPO}/git/trees/${tag_ref}?recursive=true"
 	local tree_json=""
 
 	if command -v curl >/dev/null 2>&1; then

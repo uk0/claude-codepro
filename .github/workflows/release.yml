@@ -156,11 +156,12 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
+            -e BUILD_VERSION=${{ needs.prepare-release.outputs.version }} \
             python:3.12-slim-bullseye \
             bash -c "
               apt-get update && apt-get install -y binutils build-essential && \
               pip install . && \
-              python -m ccp.build --release && \
+              python -m ccp.build --release --version \$BUILD_VERSION && \
               ls -la ccp/dist/
             "
 
@@ -200,11 +201,12 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
+            -e BUILD_VERSION=${{ needs.prepare-release.outputs.version }} \
             python:3.12-slim-bullseye \
             bash -c "
               apt-get update && apt-get install -y binutils build-essential && \
               pip install . && \
-              python -m ccp.build --release && \
+              python -m ccp.build --release --version \$BUILD_VERSION && \
               ls -la ccp/dist/
             "
 
@@ -252,7 +254,7 @@ jobs:
       - name: Build binary
         run: |
           pip install .
-          python -m ccp.build --release
+          python -m ccp.build --release --version ${{ needs.prepare-release.outputs.version }}
           ls -la ccp/dist/
 
       - name: Upload artifact
@@ -299,7 +301,7 @@ jobs:
       - name: Build binary
         run: |
           pip install .
-          python -m ccp.build --release
+          python -m ccp.build --release --version ${{ needs.prepare-release.outputs.version }}
           ls -la ccp/dist/
 
       - name: Upload artifact

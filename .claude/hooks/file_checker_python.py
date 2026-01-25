@@ -144,7 +144,7 @@ def run_ruff_check(file_path: Path) -> tuple[bool, str]:
 
     try:
         result = subprocess.run(
-            [ruff_bin, "check", str(file_path)],
+            [ruff_bin, "check", "--output-format=concise", str(file_path)],
             capture_output=True,
             text=True,
             check=False,
@@ -188,7 +188,8 @@ def run_basedpyright_check(file_path: Path) -> tuple[bool, str]:
 def display_ruff_result(output: str) -> None:
     """Display ruff results."""
     lines = output.splitlines()
-    error_lines = [line for line in lines if line and line[0] in "FEW" and line[1:2].isdigit()]
+    error_pattern = re.compile(r":\d+:\d+: [A-Z]{1,3}\d+")
+    error_lines = [line for line in lines if error_pattern.search(line)]
     error_count = len(error_lines)
     plural = "issue" if error_count == 1 else "issues"
 
@@ -235,7 +236,10 @@ def display_basedpyright_result(output: str) -> None:
 
 
 def get_edited_file_from_stdin() -> Path | None:
-    """Get the edited file path from PostToolUse hook stdin."""
+    """Get the edited file path from PostToolUse hook stdin or command line."""
+    if len(sys.argv) > 1:
+        return Path(sys.argv[1])
+
     try:
         import select
 
@@ -292,8 +296,12 @@ def main() -> int:
 
     if has_issues:
         print("", file=sys.stderr)
+        try:
+            display_path = target_file.relative_to(Path.cwd())
+        except ValueError:
+            display_path = target_file
         print(
-            f"{RED}🛑 Python Issues found in: {target_file.relative_to(Path.cwd())}{NC}",
+            f"{RED}🛑 Python Issues found in: {display_path}{NC}",
             file=sys.stderr,
         )
 

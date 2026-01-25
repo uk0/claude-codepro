@@ -189,7 +189,9 @@ class ClaudeFilesStep(BaseStep):
             elif "/hooks/" in file_path:
                 categories["hooks"].append(file_path)
             elif "/skills/" in file_path:
-                categories["skills"].append(file_path)
+                skill_name = Path(file_path).parent.name
+                if skill_name.startswith("standards-"):
+                    categories["skills"].append(file_path)
             elif "/scripts/" in file_path:
                 continue
             else:

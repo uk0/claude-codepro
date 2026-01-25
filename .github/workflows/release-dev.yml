@@ -142,6 +142,7 @@ jobs:
     name: Publish Pre-release
     runs-on: ubuntu-latest
     needs:
+      - python-tests
       - build-ccp-arm64
       - build-ccp-darwin-arm64
     steps:

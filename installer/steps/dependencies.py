@@ -296,13 +296,13 @@ def _ensure_lsp_marketplace() -> bool:
 
 def install_typescript_lsp() -> bool:
     """Install vtsls TypeScript language server plugin."""
+    if not _run_bash_with_retry("npm install -g @vtsls/language-server"):
+        return False
+
     if _is_plugin_installed("vtsls", "claude-code-lsps"):
         return True
 
     if not _ensure_lsp_marketplace():
-        return False
-
-    if not _run_bash_with_retry("npm install -g @vtsls/language-server"):
         return False
 
     return _run_bash_with_retry("claude plugin install vtsls")
@@ -317,17 +317,6 @@ def install_pyright_lsp() -> bool:
         return False
 
     return _run_bash_with_retry("claude plugin install basedpyright")
-
-
-def install_gopls_lsp() -> bool:
-    """Install gopls Go language server plugin."""
-    if _is_plugin_installed("gopls", "claude-code-lsps"):
-        return True
-
-    if not _ensure_lsp_marketplace():
-        return False
-
-    return _run_bash_with_retry("claude plugin install gopls")
 
 
 def _configure_claude_mem_defaults() -> bool:
@@ -886,10 +875,6 @@ class DependenciesStep(BaseStep):
         if ctx.enable_python:
             if _install_with_spinner(ui, "Basedpyright LSP", install_pyright_lsp):
                 installed.append("basedpyright_lsp")
-
-        if ctx.enable_golang:
-            if _install_with_spinner(ui, "Gopls LSP", install_gopls_lsp):
-                installed.append("gopls_lsp")
 
         if _install_claude_mem_with_deps(ui):
             installed.append("claude_mem")

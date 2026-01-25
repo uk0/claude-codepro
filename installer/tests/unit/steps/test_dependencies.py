@@ -328,12 +328,12 @@ class TestTypescriptLspInstall:
         result = install_typescript_lsp()
 
         assert mock_run.call_count >= 3
-        # Check marketplace add call
+        # Check npm install call for language server binary (now first)
         first_call = mock_run.call_args_list[0][0][0]
-        assert "claude plugin marketplace add Piebald-AI/claude-code-lsps" in first_call[2]
-        # Check npm install call for language server binary
+        assert "npm install -g @vtsls/language-server" in first_call[2]
+        # Check marketplace add call
         second_call = mock_run.call_args_list[1][0][0]
-        assert "npm install -g @vtsls/language-server" in second_call[2]
+        assert "claude plugin marketplace add Piebald-AI/claude-code-lsps" in second_call[2]
         # Check plugin install call
         third_call = mock_run.call_args_list[2][0][0]
         assert "claude plugin install vtsls" in third_call[2]

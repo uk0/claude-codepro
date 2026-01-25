@@ -438,11 +438,38 @@ def _ensure_maxritter_marketplace() -> bool:
         return False
 
 
+def _migrate_from_thedotmack() -> None:
+    """Remove old thedotmack marketplace and its plugins.
+
+    This handles migration from the old marketplace name to customable.
+    """
+    import shutil
+
+    if _is_plugin_installed("claude-mem", "thedotmack"):
+        subprocess.run(
+            ["bash", "-c", "claude plugin rm claude-mem"],
+            capture_output=True,
+        )
+
+    if _is_marketplace_installed("thedotmack"):
+        subprocess.run(
+            ["bash", "-c", "claude plugin marketplace rm thedotmack"],
+            capture_output=True,
+        )
+
+    old_dir = Path.home() / ".claude" / "plugins" / "marketplaces" / "thedotmack"
+    if old_dir.exists():
+        shutil.rmtree(old_dir, ignore_errors=True)
+
+
 def install_claude_mem() -> bool:
     """Install claude-mem plugin via claude plugin marketplace.
 
     If already installed, updates marketplace and plugin to latest version.
+    Migrates from old thedotmack marketplace if present.
     """
+    _migrate_from_thedotmack()
+
     marketplace_existed = _is_marketplace_installed("customable")
 
     if not _ensure_maxritter_marketplace():

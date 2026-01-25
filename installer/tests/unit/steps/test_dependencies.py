@@ -344,6 +344,62 @@ class TestClaudeMemInstall:
         assert result is True
 
 
+class TestMigrateFromThedotmack:
+    """Test migration from old thedotmack marketplace."""
+
+    def test_migrate_from_thedotmack_exists(self):
+        """_migrate_from_thedotmack function exists."""
+        from installer.steps.dependencies import _migrate_from_thedotmack
+
+        assert callable(_migrate_from_thedotmack)
+
+    @patch("installer.steps.dependencies._is_marketplace_installed")
+    @patch("installer.steps.dependencies._is_plugin_installed")
+    @patch("subprocess.run")
+    def test_migrate_removes_old_plugin_and_marketplace(
+        self, mock_run, mock_plugin_installed, mock_marketplace_installed
+    ):
+        """_migrate_from_thedotmack removes old plugin and marketplace."""
+        from installer.steps.dependencies import _migrate_from_thedotmack
+
+        mock_plugin_installed.return_value = True
+        mock_marketplace_installed.return_value = True
+        mock_run.return_value = MagicMock(returncode=0)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                # Create old marketplace directory
+                old_dir = Path(tmpdir) / ".claude" / "plugins" / "marketplaces" / "thedotmack"
+                old_dir.mkdir(parents=True)
+                (old_dir / "some_file.txt").write_text("test")
+
+                _migrate_from_thedotmack()
+
+                # Should have called to remove plugin and marketplace
+                assert mock_run.call_count >= 2
+                # Old directory should be removed
+                assert not old_dir.exists()
+
+    @patch("installer.steps.dependencies._is_marketplace_installed")
+    @patch("installer.steps.dependencies._is_plugin_installed")
+    @patch("subprocess.run")
+    def test_migrate_skips_when_nothing_to_migrate(
+        self, mock_run, mock_plugin_installed, mock_marketplace_installed
+    ):
+        """_migrate_from_thedotmack does nothing when old marketplace doesn't exist."""
+        from installer.steps.dependencies import _migrate_from_thedotmack
+
+        mock_plugin_installed.return_value = False
+        mock_marketplace_installed.return_value = False
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                _migrate_from_thedotmack()
+
+                # Should not have called subprocess.run
+                mock_run.assert_not_called()
+
+
 class TestClaudeMemDepsPreinstall:
     """Test claude-mem bun dependencies pre-installation."""
 

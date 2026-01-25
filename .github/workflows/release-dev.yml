@@ -84,7 +84,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ccp-linux-arm64
-          path: ccp/dist/ccp-linux-arm64.so
+          path: |
+            ccp/dist/ccp-linux-arm64.so
+            ccp/dist/ccp
           retention-days: 1
 
   build-ccp-darwin-arm64:
@@ -197,6 +199,7 @@ jobs:
             --notes "$NOTES" \
             --prerelease \
             artifacts/ccp-linux-arm64/ccp-linux-arm64.so \
+            artifacts/ccp-linux-arm64/ccp \
             artifacts/ccp-darwin-arm64/ccp-darwin-arm64.so
 
           echo "Pre-release $VERSION created successfully"

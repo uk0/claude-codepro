@@ -193,44 +193,37 @@ def _migrate_legacy_plugins(ui: Any = None) -> None:
     - thedotmack marketplace
     - customable marketplace
 
-    Directly modifies installed_plugins.json since 'claude plugin rm' is unreliable.
+    Uses 'claude plugin uninstall' CLI for proper cleanup.
     """
     import json
     import shutil
+    import subprocess
 
     removed_plugins: list[str] = []
     removed_marketplaces: list[str] = []
 
     plugins_to_remove = [
-        ("context7", "claude-plugins-official"),
-        ("claude-mem", "thedotmack"),
-        ("claude-mem", "customable"),
-        ("basedpyright", "claude-code-lsps"),
-        ("typescript-lsp", "claude-code-lsps"),
-        ("vtsls", "claude-code-lsps"),
-        ("gopls", "claude-code-lsps"),
-        ("pyright-lsp", "claude-plugins-official"),
-        ("typescript-lsp", "claude-plugins-official"),
-        ("gopls-lsp", "claude-plugins-official"),
+        "context7",
+        "claude-mem",
+        "basedpyright",
+        "typescript-lsp",
+        "vtsls",
+        "gopls",
+        "pyright-lsp",
+        "gopls-lsp",
     ]
 
-    installed_path = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
-    if installed_path.exists():
+    for plugin_name in plugins_to_remove:
         try:
-            data = json.loads(installed_path.read_text())
-            plugins = data.get("plugins", {})
-            modified = False
-
-            for plugin_name, marketplace in plugins_to_remove:
-                key = f"{plugin_name}@{marketplace}"
-                if key in plugins:
-                    del plugins[key]
-                    removed_plugins.append(key)
-                    modified = True
-
-            if modified:
-                installed_path.write_text(json.dumps(data, indent=2))
-        except (json.JSONDecodeError, OSError):
+            result = subprocess.run(
+                ["claude", "plugin", "uninstall", plugin_name],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                removed_plugins.append(plugin_name)
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
             pass
 
     cache_dir = Path.home() / ".claude" / "plugins" / "cache"

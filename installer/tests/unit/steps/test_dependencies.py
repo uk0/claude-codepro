@@ -298,44 +298,41 @@ class TestMigrateLegacyPlugins:
 
         assert callable(_migrate_legacy_plugins)
 
-    def test_migrate_removes_plugins_from_json(self):
-        """_migrate_legacy_plugins removes plugin entries from installed_plugins.json."""
-        import json
-
+    @patch("installer.steps.dependencies.subprocess.run")
+    def test_migrate_calls_plugin_uninstall(self, mock_run):
+        """_migrate_legacy_plugins calls 'claude plugin uninstall' for each legacy plugin."""
         from installer.steps.dependencies import _migrate_legacy_plugins
+
+        mock_run.return_value.returncode = 0
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.object(Path, "home", return_value=Path(tmpdir)):
-                # Create installed_plugins.json with legacy plugins
-                plugins_dir = Path(tmpdir) / ".claude" / "plugins"
-                plugins_dir.mkdir(parents=True)
-                installed_json = plugins_dir / "installed_plugins.json"
-                installed_json.write_text(
-                    json.dumps(
-                        {
-                            "version": 2,
-                            "plugins": {
-                                "context7@claude-plugins-official": [{"version": "1.0.0"}],
-                                "claude-mem@thedotmack": [{"version": "1.0.0"}],
-                                "basedpyright@claude-code-lsps": [{"version": "1.0.0"}],
-                                "vercel@claude-plugins-official": [{"version": "1.0.0"}],
-                            },
-                        }
-                    )
-                )
-
                 _migrate_legacy_plugins(ui=None)
 
-                # Check that legacy plugins were removed but vercel kept
-                data = json.loads(installed_json.read_text())
-                assert "context7@claude-plugins-official" not in data["plugins"]
-                assert "claude-mem@thedotmack" not in data["plugins"]
-                assert "basedpyright@claude-code-lsps" not in data["plugins"]
-                assert "vercel@claude-plugins-official" in data["plugins"]
+                # Check that uninstall was called for expected plugins
+                expected_plugins = [
+                    "context7",
+                    "claude-mem",
+                    "basedpyright",
+                    "typescript-lsp",
+                    "vtsls",
+                    "gopls",
+                    "pyright-lsp",
+                    "gopls-lsp",
+                ]
+                assert mock_run.call_count == len(expected_plugins)
 
-    def test_migrate_removes_cache_directories(self):
+                for call_args in mock_run.call_args_list:
+                    args = call_args[0][0]
+                    assert args[:3] == ["claude", "plugin", "uninstall"]
+                    assert args[3] in expected_plugins
+
+    @patch("installer.steps.dependencies.subprocess.run")
+    def test_migrate_removes_cache_directories(self, mock_run):
         """_migrate_legacy_plugins removes cache directories for legacy marketplaces."""
         from installer.steps.dependencies import _migrate_legacy_plugins
+
+        mock_run.return_value.returncode = 0
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.object(Path, "home", return_value=Path(tmpdir)):
@@ -351,9 +348,12 @@ class TestMigrateLegacyPlugins:
                 assert not (cache_dir / "customable").exists()
                 assert not (cache_dir / "claude-code-lsps").exists()
 
-    def test_migrate_removes_marketplace_directories(self):
+    @patch("installer.steps.dependencies.subprocess.run")
+    def test_migrate_removes_marketplace_directories(self, mock_run):
         """_migrate_legacy_plugins removes marketplace directories."""
         from installer.steps.dependencies import _migrate_legacy_plugins
+
+        mock_run.return_value.returncode = 0
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.object(Path, "home", return_value=Path(tmpdir)):
@@ -368,9 +368,12 @@ class TestMigrateLegacyPlugins:
                 assert not (marketplaces_dir / "thedotmack").exists()
                 assert not (marketplaces_dir / "customable").exists()
 
-    def test_migrate_skips_when_nothing_to_migrate(self):
+    @patch("installer.steps.dependencies.subprocess.run")
+    def test_migrate_skips_when_nothing_to_migrate(self, mock_run):
         """_migrate_legacy_plugins does nothing when nothing to migrate."""
         from installer.steps.dependencies import _migrate_legacy_plugins
+
+        mock_run.return_value.returncode = 1  # Simulate plugin not found
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.object(Path, "home", return_value=Path(tmpdir)):

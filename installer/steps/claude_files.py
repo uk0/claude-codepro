@@ -279,10 +279,6 @@ class ClaudeFilesStep(BaseStep):
                         else:
                             failed_files.append(file_path)
                 ui.success(f"Installed {len(files)} {category_names[category]}")
-                if not ui.quiet and category != "plugin":
-                    for file_path in files:
-                        file_name = Path(file_path).stem
-                        ui.print(f"    [dim]✓ {file_name}[/dim]")
             else:
                 for file_path in files:
                     dest_file = ctx.project_dir / file_path

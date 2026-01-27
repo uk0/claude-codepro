@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-import io
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 
 class TestConsole:
     """Test Console wrapper class."""
@@ -39,13 +34,6 @@ class TestConsole:
 
         console = Console()
         console.error("Installation failed")
-
-    def test_console_section_creates_panel(self):
-        """Console.section should create a bordered panel."""
-        from installer.ui import Console
-
-        console = Console()
-        console.section("Installing Dependencies")
 
     def test_console_progress_context_manager(self):
         """Console.progress should return a context manager."""
@@ -83,18 +71,3 @@ class TestConsoleNonInteractive:
         console = Console(non_interactive=True)
         result = console.input("Enter value:", default="default_value")
         assert result == "default_value"
-
-
-class TestConsoleTable:
-    """Test Console table functionality."""
-
-    def test_console_table_renders_data(self):
-        """Console.table should render tabular data."""
-        from installer.ui import Console
-
-        console = Console()
-        data = [
-            {"Step": "Bootstrap", "Status": "Complete"},
-            {"Step": "GitSetup", "Status": "Pending"},
-        ]
-        console.table(data, title="Installation Status")

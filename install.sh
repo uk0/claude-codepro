@@ -10,6 +10,7 @@ REPO="maxritter/claude-codepro"
 INSTALL_DEV=false
 INSTALL_VERSION=""
 INSTALLER_ARGS=""
+RESTART_CCP=false
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -23,6 +24,10 @@ while [ $# -gt 0 ]; do
 		;;
 	--version=*)
 		INSTALL_VERSION="${1#*=}"
+		shift
+		;;
+	--restart-ccp)
+		RESTART_CCP=true
 		shift
 		;;
 	*)
@@ -489,3 +494,14 @@ download_installer
 download_ccp_binary
 
 run_installer $INSTALLER_ARGS
+
+# Restart CCP after update if requested
+if [ "$RESTART_CCP" = true ]; then
+	CCP_BIN=".claude/bin/ccp"
+	if [ -x "$CCP_BIN" ]; then
+		echo ""
+		echo "  Restarting Claude CodePro..."
+		echo ""
+		exec "$CCP_BIN" --skip-update-check
+	fi
+fi

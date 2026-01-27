@@ -102,6 +102,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "uv run python \"${CLAUDE_PLUGIN_ROOT}/hooks/learn_reminder.py\""
+          },
+          {
+            "type": "command",
             "command": "uv run python \"${CLAUDE_PLUGIN_ROOT}/hooks/spec_stop_guard.py\""
           },
           {

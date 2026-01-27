@@ -1,5 +1,5 @@
 ---
-name: CCP Go Standards
+name: standards-golang
 description: Apply Go development standards including module management, go test testing, gofmt/go vet/golangci-lint code quality, idiomatic error handling, and self-documenting code practices. Use this skill when working with Go backend code, managing dependencies, running tests, or ensuring code quality. Apply when installing packages, writing tests, formatting code, handling errors, organizing imports, or deciding whether to create new files vs. extending existing ones. Use for any Go development task requiring adherence to tooling standards and best practices.
 ---
 

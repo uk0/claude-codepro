@@ -116,7 +116,7 @@ class GitSetupStep(BaseStep):
         ui = ctx.ui
 
         if ui:
-            ui.section("Git Configuration")
+            ui.status("Checking git configuration...")
 
         try:
             subprocess.run(["git", "--version"], capture_output=True, check=True)

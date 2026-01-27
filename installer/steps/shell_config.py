@@ -295,7 +295,7 @@ class ShellConfigStep(BaseStep):
 
         ctx.config["modified_shell_configs"] = modified_files
 
-        if ui and modified_files:
+        if ui and modified_files and not ui.quiet:
             ui.print()
             ui.status("To use the 'ccp' command, reload your shell:")
             ui.print("  source ~/.bashrc  # or ~/.zshrc")

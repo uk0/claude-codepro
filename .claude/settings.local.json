@@ -55,8 +55,9 @@
       "mcp__plugin_ccp_context7__*",
       "mcp__plugin_ccp_web-search__*",
       "mcp__plugin_ccp_web-fetch__*",
-      "Skill(skill-creator)",
       "Skill(spec)",
+      "Skill(sync)",
+      "Skill(learn)",
       "LSP"
     ],
     "deny": []

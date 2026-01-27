@@ -35,16 +35,3 @@ def save_config(project_dir: Path, config: dict[str, Any]) -> bool:
         return True
     except OSError:
         return False
-
-
-def get_preference(project_dir: Path, key: str, default: Any = None) -> Any:
-    """Get a single preference value."""
-    config = load_config(project_dir)
-    return config.get(key, default)
-
-
-def set_preference(project_dir: Path, key: str, value: Any) -> bool:
-    """Set a single preference value."""
-    config = load_config(project_dir)
-    config[key] = value
-    return save_config(project_dir, config)

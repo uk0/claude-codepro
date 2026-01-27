@@ -141,34 +141,3 @@ def get_repo_files(dir_path: str, config: DownloadConfig) -> list[FileInfo]:
             return remote_files
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
         return []
-
-
-def download_directory(
-    repo_dir: str,
-    dest_dir: Path,
-    config: DownloadConfig,
-    exclude_patterns: list[str] | None = None,
-    progress_callback: Callable[[int, int], None] | None = None,
-) -> int:
-    """Download an entire directory from the repository."""
-    if exclude_patterns is None:
-        exclude_patterns = []
-
-    file_infos = get_repo_files(repo_dir, config)
-    count = 0
-    total = len(file_infos)
-
-    for i, file_info in enumerate(file_infos):
-        if any(pattern.replace("*", "") in file_info.path for pattern in exclude_patterns):
-            continue
-
-        rel_path = Path(file_info.path).relative_to(repo_dir)
-        dest_path = dest_dir / rel_path
-
-        if download_file(file_info, dest_path, config):
-            count += 1
-
-        if progress_callback:
-            progress_callback(i + 1, total)
-
-    return count

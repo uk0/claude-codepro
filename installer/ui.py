@@ -19,7 +19,6 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 from rich.rule import Rule
-from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
@@ -194,6 +193,7 @@ class Console:
         """Print a step indicator with progress."""
         self._current_step += 1
         if self._quiet:
+            self._console.print(f"  [{self._current_step}/{self._total_steps}] {name}...")
             return
         step_text = Text()
         step_text.append(f"[{self._current_step}/{self._total_steps}] ", style="bold magenta")
@@ -215,6 +215,8 @@ class Console:
 
     def warning(self, message: str) -> None:
         """Print a warning message in yellow with warning symbol."""
+        if self._quiet:
+            return
         self._console.print(f"  [yellow]⚠[/yellow] [yellow]{message}[/yellow]")
 
     def error(self, message: str) -> None:
@@ -226,55 +228,6 @@ class Console:
         if self._quiet:
             return
         self._console.print(f"  [dim]ℹ[/dim] [dim]{message}[/dim]")
-
-    def section(self, title: str) -> None:
-        """Print a section header with styled panel."""
-        self._console.print()
-        panel = Panel(
-            Text(title, style="bold white", justify="center"),
-            border_style="blue",
-            padding=(0, 2),
-            expand=False,
-        )
-        self._console.print(panel)
-        self._console.print()
-
-    def box(self, content: str, title: str | None = None, style: str = "cyan") -> None:
-        """Print content in a styled box."""
-        panel = Panel(
-            content,
-            title=title,
-            title_align="left",
-            border_style=style,
-            padding=(1, 2),
-        )
-        self._console.print(panel)
-
-    def success_box(self, title: str, items: list[str]) -> None:
-        """Print a success summary box with checkmarks."""
-        content = "\n".join(f"[green]✓[/green] {item}" for item in items)
-        panel = Panel(
-            content,
-            title=f"[bold green]✨ {title}[/bold green]",
-            title_align="left",
-            border_style="green",
-            padding=(1, 2),
-        )
-        self._console.print()
-        self._console.print(panel)
-
-    def error_box(self, title: str, items: list[str]) -> None:
-        """Print an error summary box."""
-        content = "\n".join(f"[red]✗[/red] {item}" for item in items)
-        panel = Panel(
-            content,
-            title=f"[bold red]❌ {title}[/bold red]",
-            title_align="left",
-            border_style="red",
-            padding=(1, 2),
-        )
-        self._console.print()
-        self._console.print(panel)
 
     def next_steps(self, steps: list[tuple[str, str]]) -> None:
         """Print a styled next steps guide."""
@@ -313,40 +266,6 @@ class Console:
         """Context manager for a simple spinner."""
         with self._console.status(f"[cyan]{message}[/cyan]", spinner="dots"):
             yield
-
-    def table(self, data: list[dict[str, Any]], title: str | None = None) -> None:
-        """Print a styled table with the given data."""
-        if not data:
-            return
-
-        table = Table(
-            title=title,
-            title_style="bold cyan",
-            border_style="dim",
-            header_style="bold magenta",
-            row_styles=["", "dim"],
-        )
-
-        for key in data[0].keys():
-            table.add_column(key.replace("_", " ").title())
-
-        for row in data:
-            table.add_row(*[str(v) for v in row.values()])
-
-        self._console.print()
-        self._console.print(table)
-        self._console.print()
-
-    def checklist(self, title: str, items: list[tuple[str, bool]]) -> None:
-        """Print a checklist with pass/fail indicators."""
-        self._console.print()
-        self._console.print(f"[bold]{title}[/bold]")
-        self._console.print()
-
-        for item, passed in items:
-            icon = "[green]✓[/green]" if passed else "[red]✗[/red]"
-            status = "[green]PASS[/green]" if passed else "[red]FAIL[/red]"
-            self._console.print(f"  {icon} {item} [{status}]")
 
     def confirm(self, message: str, default: bool = True) -> bool:
         """Prompt for yes/no confirmation."""

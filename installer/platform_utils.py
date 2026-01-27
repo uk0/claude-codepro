@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -29,16 +28,6 @@ def has_nvidia_gpu() -> bool:
         pass
 
     return False
-
-
-def is_macos() -> bool:
-    """Check if running on macOS."""
-    return platform.system() == "Darwin"
-
-
-def is_linux() -> bool:
-    """Check if running on Linux."""
-    return platform.system() == "Linux"
 
 
 def is_in_devcontainer() -> bool:

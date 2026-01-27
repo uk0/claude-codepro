@@ -112,9 +112,7 @@ class VSCodeExtensionsStep(BaseStep):
 
         if not missing:
             if ui:
-                ui.success(f"All {len(already_installed)} recommended extensions already installed:")
-                for ext in already_installed:
-                    ui.print(f"    [dim]✓ {ext}[/dim]")
+                ui.success(f"All {len(already_installed)} recommended extensions already installed")
             ctx.config["installed_extensions"] = 0
             ctx.config["failed_extensions"] = []
             ctx.config["local_extensions"] = LOCAL_EXTENSIONS
@@ -129,12 +127,8 @@ class VSCodeExtensionsStep(BaseStep):
         for ext in missing:
             if _install_extension(cli, ext):
                 installed_count += 1
-                if ui:
-                    ui.print(f"  [green]✓[/green] {ext}")
             else:
                 failed.append(ext)
-                if ui:
-                    ui.print(f"  [yellow]✗[/yellow] {ext}")
 
         if ui:
             if installed_count > 0:

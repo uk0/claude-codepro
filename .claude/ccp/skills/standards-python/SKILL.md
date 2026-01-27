@@ -1,5 +1,5 @@
 ---
-name: CCP Python Standards
+name: standards-python
 description: Apply Python tooling standards including uv package management, pytest testing, ruff/basedpyright code quality, one-line docstrings, and self-documenting code practices. Use this skill when working with Python backend code, managing dependencies, running tests, or ensuring code quality. Apply when installing packages, writing tests, formatting code, type checking, adding docstrings, organizing imports, or deciding whether to create new files vs. extending existing ones. Use for any Python development task requiring adherence to tooling standards and best practices.
 ---
 

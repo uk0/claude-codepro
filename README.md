@@ -28,7 +28,7 @@ A shortcut to state-of-the-art Claude Code development, continuously improved.
 curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/v5.3.0/install.sh | bash
 ```
 
-Then run `ccp` and `/sync` once to sync rules and skills. Use `/spec` or the quick mode for full quality.
+Then run `ccp` in your terminal to start Claude Code, and type `/sync` inside the session to sync rules and skills. Use `/spec` for Spec-Driven Development or Quick Mode for fast fixes.
 
 ---
 

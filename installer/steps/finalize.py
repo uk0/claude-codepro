@@ -51,6 +51,10 @@ class FinalizeStep(BaseStep):
         if not ui:
             return
 
+        if ui.quiet:
+            ui.print(f"  [green]✓[/green] Update complete (v{_get_ccp_version()})")
+            return
+
         steps: list[tuple[str, str]] = []
 
         if ctx.is_local_install:
